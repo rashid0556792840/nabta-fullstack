@@ -5,6 +5,10 @@ services:
   - type: web
     name: nabta-api
     runtime: node
+      - type: web
+    name: nabta-api
+    runtime: node
+    region: singapore
     rootDir: server
     plan: free
     buildCommand: npm ci
