@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nabta | Contact</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="logo" href="index.html">🌿 Nabta</a>
+      <nav aria-label="Main">
+        <ul class="nav">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="care-guide.html">Care guide</a></li>
+          <li><a href="contact.html" aria-current="page">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap narrow">
+    <h1>Contact us</h1>
+    <p>This form uses native HTML validation (required, type, pattern, min/max) and then a JavaScript layer that
+      checks the values with regular expressions and removes any HTML/script before it is shown.</p>
+
+    <form id="contact-form" class="form" novalidate>
+      <fieldset>
+        <legend>Your details</legend>
+        <label for="name">Full name</label>
+        <input id="name" name="name" type="text" required minlength="2" maxlength="60" autocomplete="name">
+
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" required autocomplete="email">
+
+        <label for="phone">Phone (optional)</label>
+        <input id="phone" name="phone" type="tel" pattern="\+?[0-9\s\-]{7,20}" placeholder="+966 50 123 4567">
+      </fieldset>
+
+      <fieldset>
+        <legend>Your message</legend>
+        <label for="topic">Topic</label>
+        <select id="topic" name="topic" required>
+          <option value="">Choose…</option>
+          <option>Plant care</option>
+          <option>An order</option>
+          <option>Something else</option>
+        </select>
+
+        <label for="plants">How many plants do you have?</label>
+        <input id="plants" name="plants" type="number" min="0" max="500" value="1">
+
+        <label for="message">Message</label>
+        <textarea id="message" name="message" rows="5" required minlength="10" maxlength="1000"></textarea>
+
+        <label class="check"><input type="checkbox" name="newsletter"> Send me care tips by email</label>
+      </fieldset>
+
+      <p id="errors" class="errors" role="alert" hidden></p>
+      <button class="button" type="submit">Send</button>
+    </form>
+
+    <section id="preview" class="card" hidden aria-live="polite">
+      <h2>Submitted (sanitised) values</h2>
+      <dl id="preview-list"></dl>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap"><p>© 2026 Nabta · Static lab site</p></div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+# Dependencies and builds
+node_modules/
+dist/
+deploy/nabta.war
+deploy/war-stage/
+
+# Secrets - never commit real environment files
+.env
+.env.local
+.env.*.local
+
+# Runtime files written by the server
+server/logs/
+static-site/lab-notes.txt
+server/labs/lab-notes.txt
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
