@@ -11,6 +11,7 @@ import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import Favorites from './pages/Favorites';
+import Messages from './pages/Messages';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Account from './pages/Account';
@@ -27,7 +28,8 @@ import AdminMessages from './pages/admin/AdminMessages';
 
 export default function App() {
   const { pathname } = useLocation();
-    useEffect(() => {
+  // Block body so the effect returns nothing (newer browsers return a Promise from scrollTo)
+  useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
 
@@ -51,6 +53,7 @@ export default function App() {
             <Route path="/orders" element={<Orders />} />
             <Route path="/orders/:id" element={<OrderDetail />} />
             <Route path="/favorites" element={<Favorites />} />
+            <Route path="/messages" element={<Messages />} />
             <Route path="/account" element={<Account />} />
           </Route>
 

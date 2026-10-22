@@ -28,6 +28,21 @@ async function requireAuth(req, _res, next) {
   next();
 }
 
+/** Like requireAuth, but never blocks: sets req.user when a valid token is sent, otherwise continues as a guest. */
+async function optionalAuth(req, _res, next) {
+  const [scheme, token] = (req.get('authorization') || '').split(' ');
+  if (scheme === 'Bearer' && token) {
+    try {
+      const payload = jwt.verify(token, env.jwtSecret);
+      const user = await User.findById(payload.sub);
+      if (user && user.isActive) req.user = user;
+    } catch {
+      /* invalid or expired token: treat as guest */
+    }
+  }
+  next();
+}
+
 function requireRole(...roles) {
   return (req, _res, next) => {
     if (!req.user || !roles.includes(req.user.role)) throw ApiError.forbidden();
@@ -35,4 +50,4 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { signToken, requireAuth, requireAdmin: requireRole('admin'), requireRole };
+module.exports = { signToken, requireAuth, optionalAuth, requireAdmin: requireRole('admin'), requireRole };

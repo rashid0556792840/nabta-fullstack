@@ -69,4 +69,20 @@ storeEvents.on('contact:received', async ({ message }) => {
   }
 });
 
+storeEvents.on('contact:replied', async ({ message, reply, by }) => {
+  await logActivity('contact:replied', { to: message.email, subject: message.subject, by });
+  try {
+    const html = await renderTemplate('reply-email', {
+      name: message.name,
+      reply: reply.body,
+      authorName: reply.authorName,
+      subject: message.subject,
+      original: message.message,
+    });
+    await sendMail({ to: message.email, subject: `Re: ${message.subject}`, html });
+  } catch (err) {
+    console.error('Reply email failed:', err.message);
+  }
+});
+
 module.exports = storeEvents;

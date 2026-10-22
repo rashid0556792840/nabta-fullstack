@@ -28,6 +28,7 @@ const ACTIVITY_LABELS = {
   'product:updated': 'Product edited',
   'stock:low': 'Low stock',
   'contact:received': 'New message',
+  'contact:replied': 'Message answered',
   'image:uploaded': 'Image uploaded',
   'report:daily': 'Daily report',
 };
@@ -106,7 +107,7 @@ export default function Dashboard() {
             {activity.data?.activity.map((a, i) => (
               <li key={i}>
                 <strong>{ACTIVITY_LABELS[a.type] || a.type}</strong>
-                <span>{a.orderNumber || a.name || a.email || a.from || a.user || ''}{a.status ? ` → ${a.status}` : ''}</span>
+                <span>{a.orderNumber || a.name || a.email || a.from || a.to || a.user || ''}{a.status ? ` → ${a.status}` : ''}</span>
                 <time className="muted" dateTime={a.at}>{formatDateTime(a.at)}</time>
               </li>
             ))}

@@ -12,7 +12,7 @@ checked by **Jenkins**, runnable on **Apache Tomcat**, and deployed on **Render*
 | Static HTML/CSS/JS lab site | `static-site/` | Plain HTML5, CSS3, JavaScript |
 | MongoDB shell labs | `server/mongo-shell/` | mongosh scripts |
 | Node core-module labs | `server/labs/` | http, url, fs, events |
-| API tests | `postman/` | Postman collection (36 requests, 41 tests) |
+| API tests | `postman/` | Postman collection (40 requests, 47 tests) |
 | CI / Tomcat / Render | `Jenkinsfile`, `deploy/`, `render.yaml` | Jenkins pipeline, WAR packaging, Render Blueprint |
 
 ---
@@ -21,13 +21,14 @@ checked by **Jenkins**, runnable on **Apache Tomcat**, and deployed on **Render*
 
 **Customers:** register / sign in, browse and search the catalogue, filter by category, sort, paginate,
 product pages, cart (saved in the browser), checkout with cash on delivery, order tracking and cancelling,
-favourites, profile and saved address, contact form.
+favourites, profile and saved address, contact form, and a **Messages** page showing the store's replies.
 
 **Admins:** dashboard with revenue, orders by status, 7-day sales chart, best sellers, revenue by category,
 low-stock alerts and an activity feed. Admins can also manage products (with image upload), categories,
 order statuses (pending → confirmed → shipped → delivered / cancelled), customer accounts and contact messages.
+Admins reply to messages inside the app; the reply appears on the customer's Messages page and is emailed to them.
 
-**Automation:** order confirmation and status-change emails, contact-form emails to the store,
+**Automation:** order confirmation and status-change emails, contact-form emails to the store, reply emails to customers,
 and a daily report script.
 
 ---
@@ -96,7 +97,7 @@ npm run dev                   # open http://localhost:5173
 | 3 | Debugger | `npm run debug` (`node --inspect`) |
 | **4** | SQL vs NoSQL, MongoDB setup, create/drop DB | `server/mongo-shell/01-create-drop.js` |
 | 4 | CRUD | REST endpoints for every collection + `mongo-shell/02-crud.js` |
-| 4 | Data modelling, one-to-one, one-to-many, many-to-many | `server/src/models/*`: user ↔ address (embedded 1-1), category → products (1-many), users ↔ products favourites (many-many); `mongo-shell/03-relationships.js` |
+| 4 | Data modelling, one-to-one, one-to-many, many-to-many | `server/src/models/*`: user ↔ address (embedded 1-1), category → products (1-many, referenced), message → replies (1-many, embedded), users ↔ products favourites (many-many); `mongo-shell/03-relationships.js` |
 | 4 | Aggregation, indexes, storage, replication | Dashboard pipelines in `routes/admin.js` (`$group`, `$unwind`, `$lookup`, `$dateToString`); indexes in every model; `mongo-shell/04-aggregation-indexes.js` (explain plan, `db.stats()`, replica-set check) |
 | 4 | MongoDB Atlas | Section 6 below – the deployed app runs on Atlas |
 | **CO2** | React components & hooks | `useState`, `useEffect`, `useContext`, `useReducer` (cart), `useMemo`, `useCallback`, `useRef`; custom hooks `useFetch`, `useDebounce`, `useDocumentTitle` |
@@ -114,7 +115,8 @@ npm run dev                   # open http://localhost:5173
 1. Start the server and run `npm run seed`.
 2. In Postman, choose **Import** and select `postman/Nabta.postman_collection.json`.
 3. Open the collection's **Variables** tab. Set `baseUrl` to `http://localhost:5000` (or your Render URL), and make `adminEmail` / `adminPassword` match `.env`.
-4. Click **Run collection**. Requests run in order and save tokens and IDs automatically, and all 41 tests should pass.
+4. Click **Run collection**. Requests run in order and save tokens and IDs automatically, and all 47 tests should pass.
+   Command-line alternative: `postman collection run postman/Nabta.postman_collection.json` (Postman CLI) or `npx newman run postman/Nabta.postman_collection.json`.
 5. For the upload request, choose an image in the **Body → form-data → image** field.
 
 ---
@@ -260,7 +262,8 @@ nabta-fullstack/
 | GET/POST/DELETE | `/api/favorites[/:productId]` | signed in |
 | POST | `/api/images` (multipart, field `image`) | admin |
 | GET | `/api/images/:id` | public |
-| POST | `/api/contact` | public |
-| GET | `/api/admin/stats`, `/low-stock`, `/users`, `/messages`, `/activity` · PATCH `/users/:id`, `/messages/:id/read` · DELETE `/messages/:id` | admin |
+| POST | `/api/contact` (linked to the account when signed in) | public |
+| GET | `/api/contact/mine` (the customer's messages + replies) | signed in |
+| GET | `/api/admin/stats`, `/low-stock`, `/users`, `/messages`, `/activity` · PATCH `/users/:id`, `/messages/:id/read` · POST `/messages/:id/reply` · DELETE `/messages/:id` | admin |
 
 Errors always look like `{ "error": { "status": 400, "message": "...", "details": { "field": "reason" } } }`.

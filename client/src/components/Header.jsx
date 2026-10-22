@@ -11,7 +11,7 @@ export default function Header() {
   const navigate = useNavigate();
 
   // Close the mobile menu after navigating
-    useEffect(() => {
+  useEffect(() => {
     setMenuOpen(false);
   }, [location.pathname]);
 
@@ -51,6 +51,7 @@ export default function Header() {
           <NavLink to="/contact">Contact</NavLink>
           {user && <NavLink to="/orders">My orders</NavLink>}
           {user && <NavLink to="/favorites">Favourites</NavLink>}
+          {user && !isAdmin && <NavLink to="/messages">Messages</NavLink>}
           {isAdmin && <NavLink to="/admin" className="nav-admin">Admin</NavLink>}
           <div className="nav-account">
             {user ? (

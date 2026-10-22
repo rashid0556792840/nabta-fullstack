@@ -7,6 +7,7 @@ const ApiError = require('../utils/ApiError');
 const { requireObjectId, sanitizeText, escapeRegex } = require('../utils/validate');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 const { readRecentActivity } = require('../services/activityLog');
+const storeEvents = require('../services/events');
 
 const router = express.Router();
 router.use(requireAuth, requireAdmin);
@@ -146,6 +147,23 @@ router.patch('/messages/:id/read', async (req, res) => {
   const message = await ContactMessage.findByIdAndUpdate(req.params.id, { isRead: true }, { new: true });
   if (!message) throw ApiError.notFound('Message not found.');
   res.json({ message });
+});
+
+// POST /api/admin/messages/:id/reply - answer a customer from inside the app
+// The reply is saved on the message (customer sees it under Messages) and emailed to them.
+router.post('/messages/:id/reply', async (req, res) => {
+  requireObjectId(req.params.id, 'message id');
+  const body = sanitizeText(req.body.body, 2000);
+  if (body.length < 2) throw ApiError.badRequest('Please check the highlighted fields.', { body: 'Write a reply first.' });
+
+  const message = await ContactMessage.findById(req.params.id);
+  if (!message) throw ApiError.notFound('Message not found.');
+  message.replies.push({ body, authorName: req.user.name });
+  message.isRead = true;
+  await message.save();
+
+  storeEvents.emit('contact:replied', { message, reply: message.replies.at(-1), by: req.user.email });
+  res.status(201).json({ message });
 });
 
 // DELETE /api/admin/messages/:id

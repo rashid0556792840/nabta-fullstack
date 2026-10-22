@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { Field } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
@@ -57,7 +58,12 @@ export default function Contact() {
         </section>
 
         <form className="card form" onSubmit={onSubmit}>
-          {status.text && <p className={status.type === 'ok' ? 'alert alert-ok' : 'alert'} role="status">{status.text}</p>}
+          {status.text && (
+            <p className={status.type === 'ok' ? 'alert alert-ok' : 'alert'} role="status">
+              {status.text}{' '}
+              {status.type === 'ok' && user && <Link to="/messages">View your messages →</Link>}
+            </p>
+          )}
           <div className="form-grid">
             <Field id="name" label="Name" error={errors.name}>
               <input id="name" name="name" required minLength={2} maxLength={80} value={values.name} onChange={onChange} autoComplete="name" />
