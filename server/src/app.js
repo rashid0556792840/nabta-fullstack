@@ -15,8 +15,8 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(
   cors({
     origin(origin, cb) {
-      // Allow tools without an Origin header (Postman, curl) and the configured frontends
-      if (!origin || env.clientOrigins.includes(origin)) return cb(null, true);
+      // Allow tools without an Origin header (Postman, curl), the website and the Android app (Capacitor)
+      if (!origin || env.clientOrigins.includes(origin) || env.appOrigins.includes(origin)) return cb(null, true);
       return cb(null, false);
     },
   })
@@ -46,6 +46,11 @@ app.use('/api/favorites', require('./routes/favorites'));
 app.use('/api/images', require('./routes/images'));
 app.use('/api/contact', require('./routes/contact'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/company', require('./routes/company'));
+app.use('/api/payments', require('./routes/payments'));
+app.use('/api/operations', require('./routes/operations'));
+app.use('/api/delivery', require('./routes/delivery'));
+app.use('/api/notifications', require('./routes/notifications'));
 
 app.use(notFound);
 app.use(errorHandler);

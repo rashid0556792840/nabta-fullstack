@@ -19,11 +19,11 @@ async function requireAuth(req, _res, next) {
   try {
     payload = jwt.verify(token, env.jwtSecret);
   } catch {
-    throw ApiError.unauthorized('Your session has expired. Please sign in again.');
+    throw ApiError.unauthorized('Your session has expired. Please sign in again.', 'session_expired');
   }
 
   const user = await User.findById(payload.sub);
-  if (!user || !user.isActive) throw ApiError.unauthorized('This account is not active.');
+  if (!user || !user.isActive) throw ApiError.unauthorized('This account is not active.', 'account_disabled');
   req.user = user;
   next();
 }
@@ -50,4 +50,12 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { signToken, requireAuth, optionalAuth, requireAdmin: requireRole('admin'), requireRole };
+module.exports = {
+  signToken,
+  requireAuth,
+  optionalAuth,
+  requireRole,
+  requireAdmin: requireRole('admin'),
+  requireStaff: requireRole('admin', 'supervisor'), // runs orders and dispatch
+  requireDriver: requireRole('delivery'),
+};

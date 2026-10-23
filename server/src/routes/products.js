@@ -10,10 +10,11 @@ const storeEvents = require('../services/events');
 const router = express.Router();
 
 const SORTS = {
-  newest: { createdAt: -1 },
-  'price-asc': { price: 1 },
-  'price-desc': { price: -1 },
-  name: { name: 1 },
+  newest: { createdAt: -1, _id: -1 },
+  'price-asc': { price: 1, _id: 1 },
+  'price-desc': { price: -1, _id: 1 },
+  name: { name: 1, _id: 1 },
+  'name-ar': { nameAr: 1, name: 1, _id: 1 }, // alphabetical by the Arabic name
 };
 
 /** Builds a Mongo filter from query-string parameters. */
@@ -22,7 +23,7 @@ function buildFilter(query, { includeInactive = false } = {}) {
   const q = sanitizeText(query.q, 60);
   if (q) {
     const rx = new RegExp(escapeRegex(q), 'i');
-    filter.$or = [{ name: rx }, { description: rx }];
+    filter.$or = [{ name: rx }, { nameAr: rx }, { description: rx }, { descriptionAr: rx }];
   }
   if (query.category && isObjectId(query.category)) filter.category = query.category;
   const min = toNumber(query.minPrice);
@@ -33,6 +34,7 @@ function buildFilter(query, { includeInactive = false } = {}) {
     if (!Number.isNaN(max)) filter.price.$lte = max;
   }
   if (query.inStock === 'true') filter.stock = { $gt: 0 };
+  if (query.featured === 'true') filter.isFeatured = true;
   return filter;
 }
 
@@ -43,7 +45,7 @@ async function listProducts(req, res, options) {
   const filter = buildFilter(req.query, options);
 
   const [products, total] = await Promise.all([
-    Product.find(filter).populate('category', 'name').sort(sort).skip((page - 1) * limit).limit(limit),
+    Product.find(filter).populate('category', 'name nameAr').sort(sort).skip((page - 1) * limit).limit(limit),
     Product.countDocuments(filter),
   ]);
 
@@ -68,7 +70,7 @@ router.get('/admin', requireAuth, requireAdmin, (req, res) => listProducts(req, 
 // GET /api/products/:id
 router.get('/:id', async (req, res) => {
   requireObjectId(req.params.id, 'product id');
-  const product = await Product.findOne({ _id: req.params.id, isActive: true }).populate('category', 'name');
+  const product = await Product.findOne({ _id: req.params.id, isActive: true }).populate('category', 'name nameAr');
   if (!product) throw ApiError.notFound('Product not found.');
   res.json({ product });
 });
@@ -76,8 +78,11 @@ router.get('/:id', async (req, res) => {
 async function readProduct(body) {
   const data = {
     name: sanitizeText(body.name, 100),
+    nameAr: sanitizeText(body.nameAr, 100),
     description: sanitizeText(body.description, 1000),
+    descriptionAr: sanitizeText(body.descriptionAr, 1000),
     price: toNumber(body.price),
+    weightGrams: body.weightGrams === '' || body.weightGrams === null || body.weightGrams === undefined ? null : toNumber(body.weightGrams),
     stock: toNumber(body.stock),
     category: body.category,
     imageUrl: sanitizeText(body.imageUrl, 300),
@@ -86,6 +91,7 @@ async function readProduct(body) {
   v.check(data.name.length >= 2, 'name', 'Product name needs at least 2 characters.');
   v.check(data.price >= 0 && data.price <= 100000, 'price', 'Price must be between 0 and 100,000.');
   v.check(Number.isInteger(data.stock) && data.stock >= 0, 'stock', 'Stock must be a whole number, 0 or more.');
+  v.check(data.weightGrams === null || (data.weightGrams > 0 && data.weightGrams <= 100000), 'weightGrams', 'Weight must be a positive number of grams.');
   v.check(isObjectId(data.category), 'category', 'Choose a category.');
   v.check(!data.imageUrl || /^(https?:\/\/|\/api\/images\/)[^\s]+$/i.test(data.imageUrl), 'imageUrl', 'Image must be an http(s) link or an uploaded image.');
   v.throwIfErrors();
@@ -94,6 +100,7 @@ async function readProduct(body) {
   }
   data.price = Math.round(data.price * 100) / 100;
   if (typeof body.isActive === 'boolean') data.isActive = body.isActive;
+  if (typeof body.isFeatured === 'boolean') data.isFeatured = body.isFeatured;
   return data;
 }
 
@@ -101,7 +108,7 @@ async function readProduct(body) {
 router.post('/', requireAuth, requireAdmin, async (req, res) => {
   const product = await Product.create(await readProduct(req.body));
   storeEvents.emit('product:saved', { product, action: 'created' });
-  res.status(201).json({ product: await product.populate('category', 'name') });
+  res.status(201).json({ product: await product.populate('category', 'name nameAr') });
 });
 
 // PUT /api/products/:id (admin)
@@ -110,7 +117,7 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
   const product = await Product.findByIdAndUpdate(req.params.id, await readProduct(req.body), {
     new: true,
     runValidators: true,
-  }).populate('category', 'name');
+  }).populate('category', 'name nameAr');
   if (!product) throw ApiError.notFound('Product not found.');
   storeEvents.emit('product:saved', { product, action: 'updated' });
   res.json({ product });
@@ -121,7 +128,7 @@ router.patch('/:id/stock', requireAuth, requireAdmin, async (req, res) => {
   requireObjectId(req.params.id, 'product id');
   const stock = toNumber(req.body.stock);
   if (!Number.isInteger(stock) || stock < 0) throw ApiError.badRequest('Stock must be a whole number, 0 or more.');
-  const product = await Product.findByIdAndUpdate(req.params.id, { stock }, { new: true }).populate('category', 'name');
+  const product = await Product.findByIdAndUpdate(req.params.id, { stock }, { new: true }).populate('category', 'name nameAr');
   if (!product) throw ApiError.notFound('Product not found.');
   res.json({ product });
 });

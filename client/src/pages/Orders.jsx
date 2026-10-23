@@ -1,22 +1,24 @@
 import { Link } from 'react-router-dom';
+import Icon from '../components/Icon';
 import { EmptyState, ErrorState, Loading, StatusBadge } from '../components/ui';
 import { useFetch } from '../hooks/useFetch';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
-import { formatDate, formatMoney } from '../utils/format';
+import { useI18n } from '../i18n/LanguageContext';
 
 export default function Orders() {
-  useDocumentTitle('My orders');
+  const { t, date, money } = useI18n();
+  useDocumentTitle(t('nav.orders'));
   const { data, loading, error, reload } = useFetch('/orders/mine');
 
   return (
-    <div className="container page">
+    <div className="container page narrow">
       <header className="page-head">
-        <h1>My orders</h1>
+        <h1>{t('nav.orders')}</h1>
       </header>
       {loading && <Loading />}
       {error && <ErrorState error={error} onRetry={reload} />}
       {data && data.orders.length === 0 && (
-        <EmptyState title="No orders yet" text="Your placed orders will appear here." action={<Link to="/shop" className="btn btn-primary">Start shopping</Link>} />
+        <EmptyState icon="box" title={t('orders.noneTitle')} text={t('orders.noneText')} action={<Link to="/shop" className="btn btn-primary">{t('cart.startShopping')}</Link>} />
       )}
       {data && data.orders.length > 0 && (
         <ul className="order-list">
@@ -24,11 +26,12 @@ export default function Orders() {
             <li key={o._id}>
               <Link to={`/orders/${o._id}`} className="order-row">
                 <span>
-                  <strong>{o.orderNumber}</strong>
-                  <small className="muted">{formatDate(o.createdAt)} · {o.items.length} item{o.items.length === 1 ? '' : 's'}</small>
+                  <strong dir="ltr">{o.orderNumber}</strong>
+                  <small className="muted">{date(o.createdAt)} · {t('orders.itemsCount', { count: o.items.length })}</small>
                 </span>
                 <StatusBadge status={o.status} />
-                <strong>{formatMoney(o.total)}</strong>
+                <strong>{money(o.total)}</strong>
+                <Icon name="chevron" size={18} className="flip-rtl muted" />
               </Link>
             </li>
           ))}

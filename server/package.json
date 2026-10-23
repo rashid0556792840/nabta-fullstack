@@ -1,7 +1,7 @@
 {
   "name": "nabta-server",
   "version": "1.0.0",
-  "description": "Nabta online plant store - REST API (Node.js, Express, MongoDB)",
+  "description": "Nabta spice store - REST API (Node.js, Express, MongoDB)",
   "main": "src/server.js",
   "type": "commonjs",
   "scripts": {

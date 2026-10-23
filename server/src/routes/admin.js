@@ -3,14 +3,16 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const User = require('../models/User');
 const ContactMessage = require('../models/ContactMessage');
+const DeliveryAssignment = require('../models/DeliveryAssignment');
 const ApiError = require('../utils/ApiError');
 const { requireObjectId, sanitizeText, escapeRegex } = require('../utils/validate');
-const { requireAuth, requireAdmin } = require('../middleware/auth');
+const { requireAuth, requireAdmin, requireStaff } = require('../middleware/auth');
 const { readRecentActivity } = require('../services/activityLog');
 const storeEvents = require('../services/events');
 
 const router = express.Router();
-router.use(requireAuth, requireAdmin);
+// Admin and supervisor see the dashboard and messages; only the admin manages users
+router.use(requireAuth, requireStaff);
 
 // GET /api/admin/stats - dashboard numbers built with MongoDB aggregation pipelines
 router.get('/stats', async (_req, res) => {
@@ -32,7 +34,7 @@ router.get('/stats', async (_req, res) => {
     Order.aggregate([
       { $match: { status: { $ne: 'cancelled' } } },
       { $unwind: '$items' },
-      { $group: { _id: '$items.product', name: { $first: '$items.name' }, quantity: { $sum: '$items.quantity' }, revenue: { $sum: '$items.lineTotal' } } },
+      { $group: { _id: '$items.product', name: { $first: '$items.name' }, nameAr: { $first: '$items.nameAr' }, quantity: { $sum: '$items.quantity' }, revenue: { $sum: '$items.lineTotal' } } },
       { $sort: { quantity: -1 } },
       { $limit: 5 },
     ]),
@@ -52,7 +54,7 @@ router.get('/stats', async (_req, res) => {
       { $unwind: '$product' },
       { $lookup: { from: 'categories', localField: 'product.category', foreignField: '_id', as: 'category' } },
       { $unwind: '$category' },
-      { $group: { _id: '$category.name', revenue: { $sum: '$items.lineTotal' } } },
+      { $group: { _id: '$category.name', nameAr: { $first: '$category.nameAr' }, revenue: { $sum: '$items.lineTotal' } } },
       { $sort: { revenue: -1 } },
     ]),
 
@@ -61,6 +63,8 @@ router.get('/stats', async (_req, res) => {
       Product.countDocuments({ isActive: true }),
       Product.countDocuments({ isActive: true, stock: { $lte: 5 } }),
       ContactMessage.countDocuments({ isRead: false }),
+      DeliveryAssignment.countDocuments({ status: { $in: DeliveryAssignment.ACTIVE } }),
+      User.countDocuments({ role: 'delivery', isActive: true }),
     ]),
   ]);
 
@@ -74,7 +78,7 @@ router.get('/stats', async (_req, res) => {
     days.push({ date: key, total: found ? found.total : 0, orders: found ? found.orders : 0 });
   }
 
-  const [customers, activeProducts, lowStock, unreadMessages] = counts;
+  const [customers, activeProducts, lowStock, unreadMessages, activeDeliveries, drivers] = counts;
   res.json({
     revenue: revenue[0]?.revenue || 0,
     paidOrders: revenue[0]?.orders || 0,
@@ -87,19 +91,22 @@ router.get('/stats', async (_req, res) => {
     activeProducts,
     lowStock,
     unreadMessages,
+    activeDeliveries,
+    drivers,
   });
 });
 
 // GET /api/admin/low-stock
 router.get('/low-stock', async (_req, res) => {
-  const products = await Product.find({ isActive: true, stock: { $lte: 5 } }).populate('category', 'name').sort({ stock: 1 });
+  const products = await Product.find({ isActive: true, stock: { $lte: 5 } }).populate('category', 'name nameAr').sort({ stock: 1 });
   res.json({ products });
 });
 
 // GET /api/admin/users?q=
-router.get('/users', async (req, res) => {
+router.get('/users', requireAdmin, async (req, res) => {
   const q = sanitizeText(req.query.q, 60);
-  const filter = q ? { $or: [{ name: new RegExp(escapeRegex(q), 'i') }, { email: new RegExp(escapeRegex(q), 'i') }] } : {};
+  const filter = q ? { $or: [{ name: new RegExp(escapeRegex(q), 'i') }, { email: new RegExp(escapeRegex(q), 'i') }, { phone: new RegExp(escapeRegex(q), 'i') }] } : {};
+  if (User.ROLES.includes(req.query.role)) filter.role = req.query.role;
   const users = await User.aggregate([
     { $match: filter },
     { $sort: { createdAt: -1 } },
@@ -107,7 +114,7 @@ router.get('/users', async (req, res) => {
     { $lookup: { from: 'orders', localField: '_id', foreignField: 'user', as: 'orders' } },
     {
       $project: {
-        name: 1, email: 1, role: 1, isActive: 1, createdAt: 1, lastLoginAt: 1,
+        name: 1, email: 1, phone: 1, role: 1, isActive: 1, createdAt: 1, lastLoginAt: 1,
         orderCount: { $size: '$orders' },
         totalSpent: {
           $sum: {
@@ -124,12 +131,12 @@ router.get('/users', async (req, res) => {
 });
 
 // PATCH /api/admin/users/:id - enable/disable an account or change role
-router.patch('/users/:id', async (req, res) => {
+router.patch('/users/:id', requireAdmin, async (req, res) => {
   requireObjectId(req.params.id, 'user id');
-  if (String(req.params.id) === String(req.user._id)) throw ApiError.badRequest('You cannot change your own account here.');
+  if (String(req.params.id) === String(req.user._id)) throw ApiError.badRequest('You cannot change your own account here.', undefined, 'self_change');
   const update = {};
   if (typeof req.body.isActive === 'boolean') update.isActive = req.body.isActive;
-  if (['customer', 'admin'].includes(req.body.role)) update.role = req.body.role;
+  if (User.ROLES.includes(req.body.role)) update.role = req.body.role;
   if (!Object.keys(update).length) throw ApiError.badRequest('Nothing to update.');
   const user = await User.findByIdAndUpdate(req.params.id, update, { new: true });
   if (!user) throw ApiError.notFound('User not found.');
@@ -167,7 +174,7 @@ router.post('/messages/:id/reply', async (req, res) => {
 });
 
 // DELETE /api/admin/messages/:id
-router.delete('/messages/:id', async (req, res) => {
+router.delete('/messages/:id', requireAdmin, async (req, res) => {
   requireObjectId(req.params.id, 'message id');
   const deleted = await ContactMessage.findByIdAndDelete(req.params.id);
   if (!deleted) throw ApiError.notFound('Message not found.');
@@ -176,7 +183,8 @@ router.delete('/messages/:id', async (req, res) => {
 
 // GET /api/admin/activity - newest lines from logs/activity.log (File System module)
 router.get('/activity', async (_req, res) => {
-  res.json({ activity: await readRecentActivity(12) });
+  // Sign-ins are left out so the dashboard shows business events
+  res.json({ activity: await readRecentActivity(12, { skip: ['user:login'] }) });
 });
 
 module.exports = router;

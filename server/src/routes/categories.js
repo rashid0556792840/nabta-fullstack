@@ -24,23 +24,30 @@ router.get('/', async (_req, res) => {
     },
     { $addFields: { productCount: { $ifNull: [{ $first: '$counts.n' }, 0] } } },
     { $project: { counts: 0, __v: 0 } },
-    { $sort: { name: 1 } },
+    { $sort: { sortOrder: 1, name: 1 } },
   ]);
   res.json({ categories });
 });
 
 // Admin: list all including inactive
 router.get('/all', requireAuth, requireAdmin, async (_req, res) => {
-  res.json({ categories: await Category.find().sort({ name: 1 }) });
+  res.json({ categories: await Category.find().sort({ sortOrder: 1, name: 1 }) });
 });
 
 function readCategory(body) {
-  const name = sanitizeText(body.name, 60);
-  const description = sanitizeText(body.description, 300);
+  const data = {
+    name: sanitizeText(body.name, 60),
+    nameAr: sanitizeText(body.nameAr, 60),
+    description: sanitizeText(body.description, 300),
+    descriptionAr: sanitizeText(body.descriptionAr, 300),
+    imageUrl: sanitizeText(body.imageUrl, 300),
+    sortOrder: Number.isInteger(Number(body.sortOrder)) ? Number(body.sortOrder) : 0,
+  };
   const v = validator();
-  v.check(name.length >= 2, 'name', 'Category name needs at least 2 characters.');
+  v.check(data.name.length >= 2, 'name', 'Category name needs at least 2 characters.');
+  v.check(!data.imageUrl || /^(https?:\/\/|\/api\/images\/)[^\s]+$/i.test(data.imageUrl), 'imageUrl', 'Image must be an https link or an uploaded image.');
   v.throwIfErrors();
-  return { name, description };
+  return data;
 }
 
 // POST /api/categories (admin)
@@ -63,7 +70,7 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
 router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   requireObjectId(req.params.id, 'category id');
   const inUse = await Product.countDocuments({ category: req.params.id });
-  if (inUse) throw ApiError.conflict(`This category still has ${inUse} product(s). Move or delete them first.`);
+  if (inUse) throw ApiError.conflict(`This category still has ${inUse} product(s). Move or delete them first.`, 'category_in_use', { count: inUse });
   const deleted = await Category.findByIdAndDelete(req.params.id);
   if (!deleted) throw ApiError.notFound('Category not found.');
   res.status(204).end();

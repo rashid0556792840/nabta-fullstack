@@ -5,9 +5,11 @@ import { EmptyState, ErrorState, Loading } from '../components/ui';
 import { useFavorites } from '../context/FavoritesContext';
 import { useFetch } from '../hooks/useFetch';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useI18n } from '../i18n/LanguageContext';
 
 export default function Favorites() {
-  useDocumentTitle('Favourites');
+  const { t } = useI18n();
+  useDocumentTitle(t('nav.favorites'));
   const { ids } = useFavorites();
   const { data, loading, error, reload } = useFetch('/favorites');
 
@@ -20,13 +22,13 @@ export default function Favorites() {
   return (
     <div className="container page">
       <header className="page-head">
-        <h1>Favourites</h1>
-        <p className="muted">Products you saved for later.</p>
+        <h1>{t('nav.favorites')}</h1>
+        <p className="muted">{t('fav.text')}</p>
       </header>
       {loading && !data && <Loading />}
       {error && <ErrorState error={error} onRetry={reload} />}
       {data && data.products.length === 0 && (
-        <EmptyState title="No favourites yet" text="Tap the heart on any product to save it here." action={<Link to="/shop" className="btn btn-primary">Browse products</Link>} />
+        <EmptyState icon="heart" title={t('fav.noneTitle')} text={t('fav.noneText')} action={<Link to="/shop" className="btn btn-primary">{t('home.browse')}</Link>} />
       )}
       <div className="product-grid">
         {data?.products.map((p) => <ProductCard key={p._id} product={p} />)}

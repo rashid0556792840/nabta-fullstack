@@ -2,44 +2,44 @@
 
 /* Element selectors */
 * { box-sizing: border-box; }
-body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #20372b; background: #f7f7f1; line-height: 1.6; }
+body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #2a1f17; background: #fbf6ec; line-height: 1.6; }
 h1, h2, h3 { line-height: 1.2; }
-a { color: #286449; }
+a { color: #4a7c3a; }
 table { border-collapse: collapse; width: 100%; }
 
 /* Class selectors */
 .wrap { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
 .narrow { max-width: 640px; }
-.button { display: inline-block; background: #174b37; color: #fff; padding: 10px 18px; border: 0; border-radius: 10px; text-decoration: none; font-weight: bold; cursor: pointer; }
-.button:hover { background: #286449; color: #fff; }
+.button { display: inline-block; background: #4a2a17; color: #fff; padding: 10px 18px; border: 0; border-radius: 10px; text-decoration: none; font-weight: bold; cursor: pointer; }
+.button:hover { background: #4a7c3a; color: #fff; }
 
 /* Box model example: margin, border, padding */
-.card { background: #fff; border: 1px solid #e3e7dd; border-radius: 14px; padding: 18px; margin: 0 0 16px; }
+.card { background: #fff; border: 1px solid #eadfcb; border-radius: 14px; padding: 18px; margin: 0 0 16px; }
 
 /* Flexbox: header row and nav */
-.site-header { background: #fff; border-bottom: 1px solid #e3e7dd; }
+.site-header { background: #fff; border-bottom: 1px solid #eadfcb; }
 .header-row { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding-top: 12px; padding-bottom: 12px; }
-.logo { font-weight: bold; font-size: 1.3rem; text-decoration: none; color: #174b37; }
+.logo { display: inline-flex; align-items: center; gap: 8px; font-weight: bold; font-size: 1.2rem; text-decoration: none; color: #4a2a17; }
 .nav { list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; flex-wrap: wrap; }
 .nav a { display: block; padding: 6px 12px; border-radius: 8px; text-decoration: none; }
-.nav a[aria-current='page'] { background: #e0eddb; font-weight: bold; }
+.nav a[aria-current='page'] { background: #eaf4dc; font-weight: bold; }
 
 /* ID selector */
-#water-result { display: block; margin-top: 10px; font-weight: bold; }
+#spice-result { display: block; margin-top: 10px; font-weight: bold; }
 
-.hero { background: #174b37; color: #fff; padding: 48px 0; margin-bottom: 24px; }
-.hero p { color: #dbe8dc; }
-.hero .button { background: #d1e17e; color: #174b37; }
+.hero { background: #4a2a17; color: #fff; padding: 48px 0; margin-bottom: 24px; }
+.hero p { color: #f4e6d8; }
+.hero .button { background: #e8a317; color: #4a2a17; }
 
 /* CSS Grid */
 .card-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
 .with-sidebar { display: grid; grid-template-columns: 1fr; gap: 24px; padding-top: 16px; padding-bottom: 32px; }
-.sidebar { background: #fff; border: 1px solid #e3e7dd; border-radius: 14px; padding: 16px; align-self: start; }
+.sidebar { background: #fff; border: 1px solid #eadfcb; border-radius: 14px; padding: 16px; align-self: start; }
 
-.table th, .table td { border-bottom: 1px solid #e3e7dd; padding: 10px; text-align: left; }
+.table th, .table td { border-bottom: 1px solid #eadfcb; padding: 10px; text-align: left; }
 .table caption { text-align: left; color: #6d7b6e; padding-bottom: 6px; }
 
-.form fieldset { border: 1px solid #e3e7dd; border-radius: 12px; margin: 0 0 16px; padding: 12px 16px; background: #fff; }
+.form fieldset { border: 1px solid #eadfcb; border-radius: 12px; margin: 0 0 16px; padding: 12px 16px; background: #fff; }
 .form label { display: block; margin-top: 10px; font-weight: bold; font-size: 0.9rem; }
 .form .check { font-weight: normal; }
 input, select, textarea { width: 100%; padding: 10px; border: 1px solid #cfd8c8; border-radius: 8px; font: inherit; }
@@ -53,8 +53,8 @@ dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; }
 dt { font-weight: bold; }
 dd { margin: 0; word-break: break-word; }
 
-.site-footer { background: #174b37; color: #cfe0d1; padding: 18px 0; margin-top: 32px; }
-.site-footer a { color: #d1e17e; }
+.site-footer { background: #4a2a17; color: #f4e6d8; padding: 18px 0; margin-top: 32px; }
+.site-footer a { color: #e8a317; }
 
 /* Media queries - mobile-first: these add layout on wider screens */
 @media (min-width: 600px) {

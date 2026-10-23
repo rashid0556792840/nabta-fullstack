@@ -1,9 +1,11 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { useI18n } from '../i18n/LanguageContext';
 
 const ToastContext = createContext(null);
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
+  const { t } = useI18n();
   const nextId = useRef(1);
 
   const dismiss = useCallback((id) => setToasts((list) => list.filter((t) => t.id !== id)), []);
@@ -23,10 +25,10 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={value}>
       {children}
       <div className="toasts" role="status" aria-live="polite">
-        {toasts.map((t) => (
-          <div key={t.id} className={`toast toast-${t.type}`}>
-            <span>{t.message}</span>
-            <button type="button" onClick={() => dismiss(t.id)} aria-label="Dismiss">×</button>
+        {toasts.map((toast) => (
+          <div key={toast.id} className={`toast toast-${toast.type}`}>
+            <span>{toast.message}</span>
+            <button type="button" onClick={() => dismiss(toast.id)} aria-label={t('common.dismiss')}>×</button>
           </div>
         ))}
       </div>

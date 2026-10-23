@@ -22,11 +22,14 @@ export function sanitize(value, max = 1000) {
     .slice(0, max);
 }
 
-/** Runs rules of the form { field: [test(value, all) => bool, message] } and returns an errors object. */
-export function validate(values, rules) {
+/**
+ * Runs rules of the form { field: [test(value, all) => bool, messageKey] } and returns an errors object.
+ * Pass the translate function `t` so the messages appear in the current language.
+ */
+export function validate(values, rules, t = (k) => k) {
   const errors = {};
-  for (const [field, [test, message]] of Object.entries(rules)) {
-    if (!test(values[field] ?? '', values)) errors[field] = message;
+  for (const [field, [test, messageKey]] of Object.entries(rules)) {
+    if (!test(values[field] ?? '', values)) errors[field] = t(messageKey);
   }
   return errors;
 }

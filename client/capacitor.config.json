@@ -1,0 +1,11 @@
+{
+  "appId": "com.nabta.spices",
+  "appName": "بهارات نبتة",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "backgroundColor": "#fbf6ec"
+  }
+}

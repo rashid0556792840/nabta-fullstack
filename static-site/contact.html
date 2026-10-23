@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nabta | Contact</title>
+  <title>Nabta Spices | Contact</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header class="site-header">
     <div class="wrap header-row">
-      <a class="logo" href="index.html">🌿 Nabta</a>
+      <a class="logo" href="index.html"><img src="logo.png" alt="" width="64" height="30"> Nabta Spices</a>
       <nav aria-label="Main">
         <ul class="nav">
           <li><a href="index.html">Home</a></li>
-          <li><a href="care-guide.html">Care guide</a></li>
+          <li><a href="spice-guide.html">Spice guide</a></li>
           <li><a href="contact.html" aria-current="page">Contact</a></li>
         </ul>
       </nav>
@@ -35,7 +35,7 @@
         <input id="email" name="email" type="email" required autocomplete="email">
 
         <label for="phone">Phone (optional)</label>
-        <input id="phone" name="phone" type="tel" pattern="\+?[0-9\s\-]{7,20}" placeholder="+966 50 123 4567">
+        <input id="phone" name="phone" type="tel" pattern="\+?[0-9\s\-]{7,20}" placeholder="05XXXXXXXX">
       </fieldset>
 
       <fieldset>
@@ -43,18 +43,18 @@
         <label for="topic">Topic</label>
         <select id="topic" name="topic" required>
           <option value="">Choose…</option>
-          <option>Plant care</option>
+          <option>A spice or blend</option>
           <option>An order</option>
           <option>Something else</option>
         </select>
 
-        <label for="plants">How many plants do you have?</label>
-        <input id="plants" name="plants" type="number" min="0" max="500" value="1">
+        <label for="people">How many people do you usually cook for?</label>
+        <input id="people" name="people" type="number" min="0" max="500" value="1">
 
         <label for="message">Message</label>
         <textarea id="message" name="message" rows="5" required minlength="10" maxlength="1000"></textarea>
 
-        <label class="check"><input type="checkbox" name="newsletter"> Send me care tips by email</label>
+        <label class="check"><input type="checkbox" name="newsletter"> Send me recipes and offers by email</label>
       </fieldset>
 
       <p id="errors" class="errors" role="alert" hidden></p>
@@ -68,7 +68,7 @@
   </main>
 
   <footer class="site-footer">
-    <div class="wrap"><p>© 2026 Nabta · Static lab site</p></div>
+    <div class="wrap"><p>© 2026 Nabta Spices · Since 2018 · Static lab site</p></div>
   </footer>
 
   <script src="js/main.js"></script>

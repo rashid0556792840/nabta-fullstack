@@ -22,6 +22,11 @@ const env = {
     .map((s) => s.trim())
     .filter(Boolean)
     .map((s) => new URL(s).origin),
+  // Origins used by the Android app built with Capacitor (the WebView loads from these)
+  appOrigins: (process.env.APP_ORIGINS || 'https://localhost,capacitor://localhost,http://localhost')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean),
   admin: {
     name: process.env.ADMIN_NAME || 'Nabta Admin',
     email: process.env.ADMIN_EMAIL || '',

@@ -1,20 +1,25 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
-import { EmptyState, ErrorState, Loading } from '../components/ui';
+import Icon from '../components/Icon';
+import { EmptyState, ErrorState, Loading, Pagination } from '../components/ui';
 import { useFetch } from '../hooks/useFetch';
 import { useDebounce } from '../hooks/useDebounce';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useI18n } from '../i18n/LanguageContext';
 import { sanitize } from '../utils/validation';
 
 export default function Shop() {
-  useDocumentTitle('Shop');
+  const { t, pick, number, lang } = useI18n();
+  useDocumentTitle(t('nav.shop'));
   const [params, setParams] = useSearchParams();
   const [search, setSearch] = useState(params.get('q') || '');
   const debounced = useDebounce(search);
 
   const category = params.get('category') || '';
-  const sort = params.get('sort') || 'newest';
+  // "Name" sorts by the Arabic or English name depending on the language shown
+  const rawSort = params.get('sort') || 'newest';
+  const sort = rawSort === 'name' || rawSort === 'name-ar' ? (lang === 'ar' ? 'name-ar' : 'name') : rawSort;
   const inStock = params.get('inStock') === 'true';
   const page = Number(params.get('page')) || 1;
 
@@ -41,58 +46,65 @@ export default function Shop() {
 
   const { data, loading, error, reload } = useFetch(query);
   const cats = useFetch('/categories');
+  const current = cats.data?.categories.find((c) => c._id === category);
 
   return (
     <div className="container page">
       <header className="page-head">
-        <p className="kicker">Catalogue</p>
-        <h1>Shop all products</h1>
+        <p className="kicker">{t('shop.kicker')}</p>
+        <h1>{current ? pick(current) : t('shop.title')}</h1>
+        {current && pick(current, 'description') && <p className="muted">{pick(current, 'description')}</p>}
       </header>
 
       <div className="shop-layout">
-        <aside className="filters" aria-label="Filters">
-          <form role="search" onSubmit={(e) => e.preventDefault()}>
-            <label htmlFor="search" className="filter-label">Search</label>
-            <input
-              id="search"
-              type="search"
-              placeholder="Plants, pots, care…"
-              value={search}
-              maxLength={60}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+        <aside className="filters" aria-label={t('shop.filters')}>
+          <form role="search" onSubmit={(e) => e.preventDefault()} className="search-box">
+            <label htmlFor="search" className="filter-label">{t('shop.search')}</label>
+            <span className="input-icon">
+              <Icon name="search" size={18} />
+              <input
+                id="search"
+                type="search"
+                placeholder={t('shop.searchPlaceholder')}
+                value={search}
+                maxLength={60}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </span>
           </form>
 
           <fieldset>
-            <legend className="filter-label">Category</legend>
-            <label className="radio">
-              <input type="radio" name="category" checked={!category} onChange={() => update({ category: '' })} />
-              All categories
-            </label>
-            {cats.data?.categories.map((c) => (
-              <label key={c._id} className="radio">
-                <input type="radio" name="category" checked={category === c._id} onChange={() => update({ category: c._id })} />
-                {c.name} <span className="muted">({c.productCount})</span>
+            <legend className="filter-label">{t('shop.category')}</legend>
+            <div className="chip-list">
+              <label className={`chip ${!category ? 'on' : ''}`}>
+                <input type="radio" name="category" checked={!category} onChange={() => update({ category: '' })} />
+                {t('shop.allCategories')}
               </label>
-            ))}
+              {cats.data?.categories.map((c) => (
+                <label key={c._id} className={`chip ${category === c._id ? 'on' : ''}`}>
+                  <input type="radio" name="category" checked={category === c._id} onChange={() => update({ category: c._id })} />
+                  {pick(c)} <span className="chip-count">{number(c.productCount)}</span>
+                </label>
+              ))}
+            </div>
           </fieldset>
 
           <label className="check">
             <input type="checkbox" checked={inStock} onChange={(e) => update({ inStock: e.target.checked ? 'true' : '' })} />
-            In stock only
+            {t('shop.inStock')}
           </label>
         </aside>
 
         <section aria-live="polite">
           <div className="shop-toolbar">
-            <p className="muted">{data ? `${data.total} product${data.total === 1 ? '' : 's'}` : ' '}</p>
+            <p className="muted">{data ? t('shop.count', { count: data.total }) : ' '}</p>
             <label className="sort">
-              Sort by
+              {t('shop.sort')}
               <select value={sort} onChange={(e) => update({ sort: e.target.value })}>
-                <option value="newest">Newest</option>
-                <option value="price-asc">Price: low to high</option>
-                <option value="price-desc">Price: high to low</option>
-                <option value="name">Name A-Z</option>
+                <option value="newest">{t('shop.sortNewest')}</option>
+                <option value="price-asc">{t('shop.sortPriceAsc')}</option>
+                <option value="price-desc">{t('shop.sortPriceDesc')}</option>
+                <option value={lang === 'ar' ? 'name-ar' : 'name'}>{t('shop.sortName')}</option>
               </select>
             </label>
           </div>
@@ -100,23 +112,13 @@ export default function Shop() {
           {loading && <Loading />}
           {error && <ErrorState error={error} onRetry={reload} />}
           {data && !loading && data.products.length === 0 && (
-            <EmptyState title="No products found" text="Try a different search or category." />
+            <EmptyState icon="search" title={t('shop.noneTitle')} text={t('shop.noneText')} />
           )}
           <div className="product-grid">
             {!loading && data?.products.map((p) => <ProductCard key={p._id} product={p} />)}
           </div>
 
-          {data && data.pages > 1 && (
-            <nav className="pagination" aria-label="Pages">
-              <button type="button" className="btn btn-outline btn-sm" disabled={page <= 1} onClick={() => update({ page: String(page - 1) })}>
-                ← Previous
-              </button>
-              <span>Page {data.page} of {data.pages}</span>
-              <button type="button" className="btn btn-outline btn-sm" disabled={page >= data.pages} onClick={() => update({ page: String(page + 1) })}>
-                Next →
-              </button>
-            </nav>
-          )}
+          {data && <Pagination page={data.page} pages={data.pages} onPage={(p) => update({ page: String(p) })} />}
         </section>
       </div>
     </div>

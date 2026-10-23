@@ -1,24 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
-<body style="margin:0;padding:24px;background:#f7f7f1;font-family:Arial,Helvetica,sans-serif;color:#20372b;">
-  <table role="presentation" width="100%" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;">
+<html lang="{{lang}}" dir="{{dir}}">
+<body style="margin:0;padding:24px;background:#faf6ee;font-family:Tahoma,Arial,Helvetica,sans-serif;color:#2b2a22;">
+  <table role="presentation" width="100%" dir="{{dir}}" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;">
     <tr>
-      <td style="background:#174b37;color:#ffffff;padding:22px 26px;">
-        <h1 style="margin:0;font-size:22px;">Nabta</h1>
-        <p style="margin:6px 0 0;color:#d1e17e;">{{headline}}</p>
+      <td style="background:#2f5d2a;color:#ffffff;padding:22px 26px;">
+        <h1 style="margin:0;font-size:22px;">{{storeName}}</h1>
+        <p style="margin:6px 0 0;color:#f2c46d;">{{headline}}</p>
       </td>
     </tr>
     <tr>
-      <td style="padding:24px 26px;">
-        <p>Hello {{customerName}},</p>
+      <td style="padding:24px 26px;text-align:{{align}};">
+        <p>{{greeting}}</p>
         <p>{{message}}</p>
-        <p style="margin:18px 0 6px;"><strong>Order {{orderNumber}}</strong> &middot; Status: <strong>{{status}}</strong></p>
+        <p style="margin:18px 0 6px;"><strong>{{orderLabel}} {{orderNumber}}</strong> &middot; {{statusLabel}}: <strong>{{status}}</strong></p>
         <table role="presentation" width="100%" style="border-collapse:collapse;font-size:14px;">
           {{itemsHtml}}
-          <tr><td style="padding:10px 0 0;border-top:1px solid #e3e7dd;"><strong>Total</strong></td>
-              <td style="padding:10px 0 0;border-top:1px solid #e3e7dd;text-align:right;"><strong>{{total}}</strong></td></tr>
+          <tr><td style="padding:10px 0 0;border-top:1px solid #ece4d4;"><strong>{{totalLabel}}</strong></td>
+              <td style="padding:10px 0 0;border-top:1px solid #ece4d4;text-align:{{alignEnd}};"><strong>{{total}}</strong></td></tr>
         </table>
-        <p style="margin-top:20px;color:#7a877a;font-size:13px;">Payment: cash on delivery. Thank you for growing with Nabta.</p>
+        <p style="margin-top:20px;color:#857b66;font-size:13px;">{{footer}}</p>
       </td>
     </tr>
   </table>

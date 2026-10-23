@@ -12,17 +12,19 @@ function cartReducer(state, action) {
       const existing = state.find((i) => i._id === product._id);
       const limit = Math.min(MAX_QTY, product.stock);
       if (existing) {
-        return state.map((i) => (i._id === product._id ? { ...i, quantity: Math.min(limit, i.quantity + quantity), stock: product.stock } : i));
+        return state.map((i) => (i._id === product._id ? { ...i, quantity: Math.min(limit, i.quantity + quantity), stock: product.stock, price: product.price } : i));
       }
       return [
         ...state,
-        { _id: product._id, name: product.name, price: product.price, imageUrl: product.imageUrl, stock: product.stock, quantity: Math.min(limit, quantity) },
+        { _id: product._id, name: product.name, nameAr: product.nameAr, weightGrams: product.weightGrams, price: product.price, imageUrl: product.imageUrl, stock: product.stock, quantity: Math.min(limit, quantity) },
       ];
     }
     case 'setQuantity':
       return state
         .map((i) => (i._id === action.id ? { ...i, quantity: Math.max(0, Math.min(MAX_QTY, i.stock, action.quantity)) } : i))
         .filter((i) => i.quantity > 0);
+    case 'addMany': // reorder: put several products back in the cart at once
+      return action.lines.reduce((st, { product, quantity }) => cartReducer(st, { type: 'add', product, quantity }), state);
     case 'remove':
       return state.filter((i) => i._id !== action.id);
     case 'clear':
@@ -57,6 +59,7 @@ export function CartProvider({ children }) {
       count,
       subtotal,
       add: (product, quantity) => dispatch({ type: 'add', product, quantity }),
+      addMany: (lines) => dispatch({ type: 'addMany', lines }),
       setQuantity: (id, quantity) => dispatch({ type: 'setQuantity', id, quantity }),
       remove: (id) => dispatch({ type: 'remove', id }),
       clear: () => dispatch({ type: 'clear' }),

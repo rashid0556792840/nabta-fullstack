@@ -1,35 +1,58 @@
-# Nabta – Full Stack Online Plant Store
+# Nabta Spices (بهارات نبتة) – Full Stack Store, Admin Panel and Android App
 
-A complete web store built for the **Full Stack Development (F0002)** course:
+Nabta is a spice company in Al Madinah, trusted for its quality since 2018.
+This project is its complete online store built for the **Full Stack Development (F0002)** course:
 **React** frontend, **Node.js + Express** REST API, **MongoDB** database, tested with **Postman**,
-checked by **Jenkins**, runnable on **Apache Tomcat**, and deployed on **Render**.
+checked by **Jenkins**, runnable on **Apache Tomcat**, deployed on **Render**, and packaged as an **Android app** with Capacitor.
+The whole interface is **Arabic first (right-to-left)** with an English toggle.
 
 | Part | Folder | Tech |
 |---|---|---|
-| Web app (customer store + admin panel) | `client/` | React 19, React Router, Vite |
+| Web app (store, admin panel, driver screen) | `client/` | React 19, React Router, Vite, Arabic/English i18n |
+| Android app | `client/android/` | Capacitor 7 (wraps the same React app) |
 | REST API | `server/` | Node.js, Express 5, Mongoose, JWT, Multer, Nodemailer |
-| Database | MongoDB (local or Atlas) | Collections: users, categories, products, orders, images, contactmessages |
+| Database | MongoDB (local or Atlas) | Collections: users, categories, products, orders, deliveryassignments, notifications, companysettings, images, contactmessages |
 | Static HTML/CSS/JS lab site | `static-site/` | Plain HTML5, CSS3, JavaScript |
 | MongoDB shell labs | `server/mongo-shell/` | mongosh scripts |
 | Node core-module labs | `server/labs/` | http, url, fs, events |
-| API tests | `postman/` | Postman collection (40 requests, 47 tests) |
+| API tests | `postman/` | Postman collection (70 requests, 91 tests) |
 | CI / Tomcat / Render | `Jenkinsfile`, `deploy/`, `render.yaml` | Jenkins pipeline, WAR packaging, Render Blueprint |
 
 ---
 
 ## 1. Features
 
-**Customers:** register / sign in, browse and search the catalogue, filter by category, sort, paginate,
-product pages, cart (saved in the browser), checkout with cash on delivery, order tracking and cancelling,
-favourites, profile and saved address, contact form, and a **Messages** page showing the store's replies.
+**Everyone:** Arabic (default, RTL) or English with one tap; the choice is remembered on the account so e-mails
+arrive in the same language. Product and category names, descriptions, statuses, errors and notifications are all bilingual.
+The company details (name, logo, phone, WhatsApp, address, Google Maps link, social links, opening hours, delivery fee)
+come from the database and are edited by the admin, so the site, app and e-mails update without code changes.
 
-**Admins:** dashboard with revenue, orders by status, 7-day sales chart, best sellers, revenue by category,
-low-stock alerts and an activity feed. Admins can also manage products (with image upload), categories,
-order statuses (pending → confirmed → shipped → delivered / cancelled), customer accounts and contact messages.
-Admins reply to messages inside the app; the reply appears on the customer's Messages page and is emailed to them.
+**Customers:** browse and search spices (Arabic or English names), filter by category, sort, product pages with weight,
+cart, checkout with **saved addresses** (up to 10) and a list of Saudi payment methods (only **cash on delivery** is active;
+mada, Apple Pay, STC Pay and cards are shown as "coming soon"), order tracking with delivery trips and delivered
+quantities, **reorder**, favourites, messages with the store's replies, WhatsApp button, in-app **notifications bell**.
 
-**Automation:** order confirmation and status-change emails, contact-form emails to the store, reply emails to customers,
-and a daily report script.
+**Roles and the order workflow**
+
+| Role | What they do |
+|---|---|
+| Customer | Places orders, cancels while *pending*, follows each step |
+| Supervisor | Confirms orders, starts processing, **dispatches** items to drivers (all at once or in several partial trips), answers messages, sees the dashboard |
+| Delivery driver | Sees assigned trips on a phone-friendly screen, calls the customer, opens directions, accepts the trip, marks it delivered with the cash to collect |
+| Admin | Everything a supervisor does, plus products, categories, users and roles, and company settings |
+
+```
+pending → confirmed → processing → out_for_delivery → completed
+                                    ↘ partially_delivered ↗   (some items delivered, the rest waiting for another trip)
+pending / confirmed / processing → cancelled (undelivered stock goes back)
+```
+Delivery statuses are never set by hand: they follow from the trips (a trip is *assigned → accepted → delivered* or *cancelled*).
+Every change creates notifications for the right people and an e-mail to the customer.
+
+**Dashboard:** revenue, orders to handle, trips on the road, average order, customers, low stock, unread messages,
+7-day sales chart, orders by status, best sellers, revenue by category and an activity feed.
+
+**Automation:** bilingual order and reply e-mails, contact-form e-mails to the store, a daily report script.
 
 ---
 
@@ -45,7 +68,7 @@ and a daily report script.
 cd server
 copy .env.example .env        # then edit .env if needed (MONGODB_URI, admin login, email)
 npm install
-npm run seed                  # adds demo categories, products, a demo customer and sample orders
+npm run seed                  # adds the spice catalogue, company details, staff, a demo customer and sample orders
 npm run dev                   # API on http://localhost:5000  (check http://localhost:5000/api/health)
 ```
 
@@ -61,6 +84,8 @@ npm run dev                   # open http://localhost:5173
 | Role | Email | Password |
 |---|---|---|
 | Admin | `admin@nabta.local` | `AdminPass123!` (from `ADMIN_EMAIL` / `ADMIN_PASSWORD` in `server/.env`) |
+| Supervisor | `supervisor@nabta.local` | `SuperPass123` |
+| Drivers | `driver@nabta.local`, `driver2@nabta.local` | `DriverPass123` |
 | Customer | `demo@nabta.local` | `DemoPass123` |
 
 > The admin account is created automatically the first time the server starts.
@@ -72,7 +97,7 @@ npm run dev                   # open http://localhost:5173
 | `npm run dev` | Start the API and restart on file changes |
 | `npm run debug` | Start with the Node debugger (`chrome://inspect` or VS Code "Attach") |
 | `npm run seed -- --reset` | Wipe store data and reseed |
-| `npm test` | Unit tests (validation & sanitization) – no database needed |
+| `npm test` | Unit tests (validation, sanitization, order state machine) – no database needed |
 | `npm run email:test -- you@example.com` | Send a test email |
 | `npm run report:daily` | Email the store a 24-hour sales + low-stock report |
 
@@ -87,7 +112,7 @@ npm run dev                   # open http://localhost:5173
 | **2** | Selectors, box model | `static-site/css/style.css` (element, class, id, attribute selectors; margin/padding/border) and `client/src/styles.css` |
 | 2 | Flexbox & CSS Grid | Header/nav/toolbars use Flexbox; product grid, category grid, dashboard, cart and checkout use Grid |
 | 2 | Responsive design, media queries, mobile-first | Both stylesheets: base styles for phones, `@media (min-width: …)` for 560/768/1024 px; also `prefers-reduced-motion` and `print` |
-| **3** | JavaScript logic & maths, DOM | `static-site/js/main.js` (watering calculator, DOM updates, `alert`/`confirm`) |
+| **3** | JavaScript logic & maths, DOM | `static-site/js/main.js` (kabsa spice calculator, DOM updates, `alert`/`confirm`) |
 | 3 | RegExp, secure validation & sanitization | Client: `client/src/utils/validation.js`, `static-site/js/main.js` (escaping, tag stripping). Server: `server/src/utils/validate.js` (sanitizeText, escapeRegex for safe search, ObjectId checks against NoSQL injection) |
 | 3 | Node.js core, modules, HTTP module | `server/src/server.js` (`http.createServer`), `server/labs/01-http-url-fs.js` (server with no Express) |
 | 3 | File System, URL module | `server/src/services/activityLog.js` (append/read log file), `mailer.js` (reads HTML templates, writes email files); URL module in `config/env.js` and the pagination `next` link in `routes/products.js` |
@@ -115,7 +140,7 @@ npm run dev                   # open http://localhost:5173
 1. Start the server and run `npm run seed`.
 2. In Postman, choose **Import** and select `postman/Nabta.postman_collection.json`.
 3. Open the collection's **Variables** tab. Set `baseUrl` to `http://localhost:5000` (or your Render URL), and make `adminEmail` / `adminPassword` match `.env`.
-4. Click **Run collection**. Requests run in order and save tokens and IDs automatically, and all 47 tests should pass.
+4. Click **Run collection**. Requests run in order and save tokens and IDs automatically, and all 91 tests should pass. The collection walks through the full workflow: order → confirm → process → partial dispatch → driver accepts and delivers → second trip → completed.
    Command-line alternative: `postman collection run postman/Nabta.postman_collection.json` (Postman CLI) or `npx newman run postman/Nabta.postman_collection.json`.
 5. For the upload request, choose an image in the **Body → form-data → image** field.
 
@@ -145,7 +170,8 @@ Static site: open `static-site/index.html` in a browser.
 3. Under **Network Access**, add `0.0.0.0/0`. Render's free IP addresses change, so you can't list one fixed IP.
 4. Click **Connect → Drivers** and copy the URI. Add the database name before the `?`:
    `mongodb+srv://USER:PASS@cluster0.xxxxx.mongodb.net/nabta?retryWrites=true&w=majority`
-5. Optional: seed Atlas from your PC. Put that URI in `server/.env` as `MONGODB_URI`, run `npm run seed`, then switch `.env` back.
+5. Seed Atlas from your PC: put that URI in `server/.env` as `MONGODB_URI`, run `npm run seed -- --reset`, then switch `.env` back.
+   (`--reset` is required when upgrading from the old plant version, because the order statuses changed.)
 
 ### 6.2 Render
 1. Push this project to GitHub.
@@ -183,7 +209,30 @@ Without SMTP settings, every email is saved as an HTML file in `server/logs/emai
 
 ---
 
-## 7. Git, Jenkins and Tomcat
+## 7. Android app (Capacitor)
+
+The app is the same React code running inside a native Android WebView, so every feature (Arabic/English,
+store, admin, driver screen, notifications) works in the app too. It talks to the live API set in `client/.env.android`.
+
+Requirements: **Android Studio** (it installs the Android SDK and a JDK).
+```powershell
+cd client
+npm install
+npm run build:android      # builds with .env.android and copies the site into client/android
+npm run android:open       # opens the project in Android Studio
+```
+In Android Studio press **Run ▶** for an emulator or a phone with USB debugging, or
+**Build → Build App Bundle(s) / APK(s) → Build APK(s)** to get an `.apk` you can install.
+After changing the React code, run `npm run build:android` again.
+
+- App id `com.nabta.spices`, name «بهارات نبتة», icons and splash screen from the Nabta logo.
+- The Android back button goes back inside the app and closes it only from the home screen.
+- The API already allows the app's origin (`https://localhost`, see `APP_ORIGINS` in `server/.env.example`).
+- Drivers can install the app and use **My deliveries**; the notifications bell refreshes every 30 seconds.
+
+---
+
+## 8. Git, Jenkins and Tomcat
 
 ### Git
 ```powershell
@@ -214,16 +263,17 @@ For the master/child repository lab, create a feature branch (`git checkout -b f
 
 ---
 
-## 8. Project structure
+## 9. Project structure
 ```
 nabta-fullstack/
-├── client/                 React app (Vite)
+├── client/                 React app (Vite) + android/ (Capacitor project)
 │   └── src/
 │       ├── api.js          fetch wrapper (token, errors)
-│       ├── context/        Auth, Cart (useReducer), Favourites, Toast providers
+│       ├── i18n/           Arabic/English dictionaries + LanguageContext (RTL, plurals, money, dates)
+│       ├── context/        Auth, Company, Cart (useReducer), Favourites, Toast providers
 │       ├── hooks/          useFetch, useDebounce, useDocumentTitle
-│       ├── components/     Header, Footer, ProductCard, ProtectedRoute, ui
-│       ├── pages/          store pages + admin/ pages
+│       ├── components/     Header, Footer, NotificationsBell, ProductCard, ImageUpload, Icon, ProtectedRoute, ui
+│       ├── pages/          store pages, admin/ pages, delivery/ driver screen
 │       └── styles.css      mobile-first responsive styles
 ├── server/                 Express API
 │   ├── src/
@@ -231,9 +281,10 @@ nabta-fullstack/
 │   │   ├── app.js          middleware + routes
 │   │   ├── config/         env + MongoDB connection
 │   │   ├── models/         Mongoose schemas
-│   │   ├── routes/         auth, categories, products, orders, favorites, images, contact, admin
+│   │   ├── routes/         auth, categories, products, orders, operations, delivery, notifications,
+│   │   │                   company, payments, favorites, images, contact, admin
 │   │   ├── middleware/     JWT auth, error handler
-│   │   ├── services/       events, mailer, activity log
+│   │   ├── services/       orderWorkflow (state machine + dispatch), events, notifications, mailer, activity log
 │   │   ├── templates/      email HTML templates
 │   │   └── utils/          validation & sanitization
 │   ├── scripts/            seed, test email, daily report
@@ -249,21 +300,29 @@ nabta-fullstack/
 
 ---
 
-## 9. API reference (summary)
+## 10. API reference (summary)
 | Method | Path | Access |
 |---|---|---|
 | GET | `/api/health` | public |
 | POST | `/api/auth/register`, `/api/auth/login` | public |
-| GET/PUT | `/api/auth/me`, PUT `/api/auth/me/password` | signed in |
+| GET/PUT | `/api/auth/me`, PATCH `/api/auth/me/language`, PUT `/api/auth/me/password` | signed in |
+| GET/POST/PUT/DELETE | `/api/auth/me/addresses[/:addressId]` | signed in |
+| GET | `/api/company` · PUT `/api/company` | public · admin |
+| GET | `/api/payments/methods` | public |
+| GET | `/api/notifications` · PATCH `/:id/read` · POST `/read-all` | signed in |
 | GET | `/api/categories` · `/api/products` (q, category, minPrice, maxPrice, inStock, sort, page, limit) · `/api/products/:id` | public |
 | POST/PUT/DELETE | `/api/categories[/:id]`, `/api/products[/:id]`, PATCH `/api/products/:id/stock` | admin |
 | POST | `/api/orders` · GET `/api/orders/mine` · GET `/api/orders/:id` · PATCH `/api/orders/:id/cancel` | customer |
-| GET | `/api/orders` · PATCH `/api/orders/:id/status` | admin |
+| GET | `/api/orders?status=open\|<status>&q=` · PATCH `/api/orders/:id/status` | admin, supervisor |
+| GET | `/api/operations/drivers` · POST `/api/operations/orders/:id/dispatch` · GET `/api/operations/assignments` · POST `/api/operations/assignments/:id/cancel` | admin, supervisor |
+| GET | `/api/delivery/assignments?status=active\|done` · `/api/delivery/summary` · POST `/api/delivery/assignments/:id/accept` · `/complete` | driver |
 | GET/POST/DELETE | `/api/favorites[/:productId]` | signed in |
 | POST | `/api/images` (multipart, field `image`) | admin |
 | GET | `/api/images/:id` | public |
 | POST | `/api/contact` (linked to the account when signed in) | public |
 | GET | `/api/contact/mine` (the customer's messages + replies) | signed in |
-| GET | `/api/admin/stats`, `/low-stock`, `/users`, `/messages`, `/activity` · PATCH `/users/:id`, `/messages/:id/read` · POST `/messages/:id/reply` · DELETE `/messages/:id` | admin |
+| GET | `/api/admin/stats`, `/low-stock`, `/messages`, `/activity` · PATCH `/messages/:id/read` · POST `/messages/:id/reply` | admin, supervisor |
+| GET/PATCH | `/api/admin/users[/:id]` (role, isActive) · DELETE `/api/admin/messages/:id` | admin |
 
-Errors always look like `{ "error": { "status": 400, "message": "...", "details": { "field": "reason" } } }`.
+Errors always look like `{ "error": { "status": 400, "code": "bad_transition", "message": "...", "details": { "field": "reason" }, "params": {} } }`.
+The `code` lets the app show the message in Arabic or English.

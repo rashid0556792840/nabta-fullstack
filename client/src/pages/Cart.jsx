@@ -1,14 +1,18 @@
 import { Link, useNavigate } from 'react-router-dom';
+import Icon from '../components/Icon';
 import { EmptyState, ProductImage } from '../components/ui';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useCompany } from '../context/CompanyContext';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
-import { FREE_DELIVERY_FROM, deliveryFor, formatMoney } from '../utils/format';
+import { useI18n } from '../i18n/LanguageContext';
 
 export default function Cart() {
-  useDocumentTitle('Cart');
+  const { t, pick, money, grams } = useI18n();
+  useDocumentTitle(t('cart.title'));
   const { items, subtotal, setQuantity, remove, clear } = useCart();
   const { user } = useAuth();
+  const { deliveryFor, freeDeliveryFrom } = useCompany();
   const navigate = useNavigate();
   const delivery = deliveryFor(subtotal);
 
@@ -16,67 +20,80 @@ export default function Cart() {
     return (
       <div className="container page">
         <EmptyState
-          title="Your cart is taking a little rest"
-          text="Explore the catalogue and add something green."
-          action={<Link to="/shop" className="btn btn-primary">Start shopping</Link>}
+          icon="cart"
+          title={t('cart.emptyTitle')}
+          text={t('cart.emptyText')}
+          action={<Link to="/shop" className="btn btn-primary">{t('cart.startShopping')}</Link>}
         />
       </div>
     );
   }
 
+  const progress = freeDeliveryFrom > 0 ? Math.min(100, (subtotal / freeDeliveryFrom) * 100) : 100;
+
   return (
     <div className="container page">
       <header className="page-head">
-        <h1>Your cart</h1>
+        <h1>{t('cart.title')}</h1>
       </header>
       <div className="cart-layout">
-        <section aria-label="Cart items">
+        <section aria-label={t('cart.items')}>
           <ul className="cart-list">
-            {items.map((item) => (
-              <li key={item._id} className="cart-item">
-                <ProductImage src={item.imageUrl} alt={item.name} className="cart-thumb" />
-                <div className="cart-item-info">
-                  <Link to={`/product/${item._id}`}><strong>{item.name}</strong></Link>
-                  <span className="muted">{formatMoney(item.price)} each</span>
-                </div>
-                <div className="qty qty-sm">
-                  <button type="button" onClick={() => setQuantity(item._id, item.quantity - 1)} aria-label={`Decrease ${item.name}`}>−</button>
-                  <span aria-live="polite">{item.quantity}</span>
-                  <button
-                    type="button"
-                    onClick={() => setQuantity(item._id, item.quantity + 1)}
-                    disabled={item.quantity >= item.stock}
-                    aria-label={`Increase ${item.name}`}
-                  >
-                    +
+            {items.map((item) => {
+              const name = pick(item);
+              return (
+                <li key={item._id} className="cart-item">
+                  <ProductImage src={item.imageUrl} alt="" className="cart-thumb" />
+                  <div className="cart-item-info">
+                    <Link to={`/product/${item._id}`}><strong>{name}</strong></Link>
+                    <span className="muted small">{money(item.price)}{item.weightGrams ? ` · ${grams(item.weightGrams)}` : ''}</span>
+                  </div>
+                  <div className="qty qty-sm">
+                    <button type="button" onClick={() => setQuantity(item._id, item.quantity - 1)} aria-label={t('cart.decreaseNamed', { name })}><Icon name="minus" size={14} /></button>
+                    <span aria-live="polite">{item.quantity}</span>
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(item._id, item.quantity + 1)}
+                      disabled={item.quantity >= item.stock}
+                      aria-label={t('cart.increaseNamed', { name })}
+                    >
+                      <Icon name="plus" size={14} />
+                    </button>
+                  </div>
+                  <strong className="cart-line">{money(item.price * item.quantity)}</strong>
+                  <button type="button" className="icon-btn subtle" onClick={() => remove(item._id)} aria-label={t('cart.removeNamed', { name })}>
+                    <Icon name="trash" size={18} />
                   </button>
-                </div>
-                <strong className="cart-line">{formatMoney(item.price * item.quantity)}</strong>
-                <button type="button" className="link-btn" onClick={() => remove(item._id)}>Remove</button>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
-          <button type="button" className="link-btn" onClick={clear}>Empty cart</button>
+          <button type="button" className="link-btn" onClick={clear}>{t('cart.empty')}</button>
         </section>
 
-        <aside className="summary" aria-label="Order summary">
-          <h2>Order summary</h2>
-          <dl>
-            <div><dt>Subtotal</dt><dd>{formatMoney(subtotal)}</dd></div>
-            <div><dt>Delivery</dt><dd>{delivery === 0 ? 'Free' : formatMoney(delivery)}</dd></div>
-            <div className="summary-total"><dt>Total</dt><dd>{formatMoney(subtotal + delivery)}</dd></div>
-          </dl>
-          {subtotal < FREE_DELIVERY_FROM && (
-            <p className="note">Add {formatMoney(FREE_DELIVERY_FROM - subtotal)} more for free delivery.</p>
+        <aside className="summary" aria-label={t('cart.summary')}>
+          <h2>{t('cart.summary')}</h2>
+          {freeDeliveryFrom > 0 && (
+            <div className="free-meter">
+              <p className="small">
+                {delivery === 0 ? t('cart.freeReached') : t('cart.addForFree', { amount: money(freeDeliveryFrom - subtotal) })}
+              </p>
+              <span className="meter-track"><span style={{ width: `${progress}%` }} /></span>
+            </div>
           )}
+          <dl>
+            <div><dt>{t('cart.subtotal')}</dt><dd>{money(subtotal)}</dd></div>
+            <div><dt>{t('cart.delivery')}</dt><dd>{delivery === 0 ? t('cart.free') : money(delivery)}</dd></div>
+            <div className="summary-total"><dt>{t('cart.total')}</dt><dd>{money(subtotal + delivery)}</dd></div>
+          </dl>
           <button
             type="button"
             className="btn btn-primary btn-block"
             onClick={() => navigate(user ? '/checkout' : '/login', { state: { from: '/checkout' } })}
           >
-            {user ? 'Continue to checkout' : 'Sign in to checkout'}
+            {user ? t('cart.toCheckout') : t('cart.signInToCheckout')}
           </button>
-          <p className="muted small">Prices and stock are confirmed by the server when you place the order.</p>
+          <p className="muted small">{t('cart.serverNote')}</p>
         </aside>
       </div>
     </div>

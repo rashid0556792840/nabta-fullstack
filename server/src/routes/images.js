@@ -33,8 +33,8 @@ function looksLikeImage(buf) {
 
 // POST /api/images  (multipart/form-data, field name "image")
 router.post('/', requireAuth, requireAdmin, upload.single('image'), async (req, res) => {
-  if (!req.file) throw ApiError.badRequest('Choose an image to upload.');
-  if (!looksLikeImage(req.file.buffer)) throw ApiError.badRequest('That file is not a valid image.');
+  if (!req.file) throw ApiError.badRequest('Choose an image to upload.', undefined, 'image_missing');
+  if (!looksLikeImage(req.file.buffer)) throw ApiError.badRequest('That file is not a valid image.', undefined, 'image_invalid');
 
   const image = await Image.create({
     data: req.file.buffer,

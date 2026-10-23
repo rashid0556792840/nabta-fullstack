@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
   const user = await User.findById(req.user._id).populate({
     path: 'favorites',
     match: { isActive: true },
-    populate: { path: 'category', select: 'name' },
+    populate: { path: 'category', select: 'name nameAr' },
   });
   res.json({ products: user.favorites });
 });

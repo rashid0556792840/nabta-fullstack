@@ -1,4 +1,5 @@
 // Small fetch wrapper for the Nabta REST API.
+// The website and the Android app both use it; the app is built with VITE_API_URL set to the live API.
 export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/+$/, '');
 
 const TOKEN_KEY = 'nabta.token';
@@ -12,11 +13,14 @@ export const tokenStore = {
   },
 };
 
+/** Error from the API. `code` and `params` let the interface show the message in Arabic or English. */
 export class ApiError extends Error {
-  constructor(status, message, details) {
+  constructor(status, message, details, code, params) {
     super(message);
     this.status = status;
     this.details = details || {};
+    this.code = code || (status === 0 ? 'offline' : 'server_error');
+    this.params = params || {};
   }
 }
 
@@ -42,8 +46,9 @@ export async function api(path, { method = 'GET', body, form, signal } = {}) {
   if (res.status === 204) return null;
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    if (res.status === 401) window.dispatchEvent(new Event('nabta:unauthorized'));
-    throw new ApiError(res.status, data?.error?.message || 'Something went wrong.', data?.error?.details);
+    const e = data?.error || {};
+    if (res.status === 401 && token) window.dispatchEvent(new Event('nabta:unauthorized'));
+    throw new ApiError(res.status, e.message || 'Something went wrong.', e.details, e.code, e.params);
   }
   return data;
 }

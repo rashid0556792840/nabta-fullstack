@@ -9,7 +9,7 @@ practice.notes.insertOne({ text: 'Hello MongoDB', createdAt: new Date() });
 print('Databases now:');
 printjson(db.adminCommand({ listDatabases: 1, nameOnly: true }).databases.map((d) => d.name));
 
-practice.createCollection('plants');
+practice.createCollection('spices');
 print('Collections in nabta_practice: ' + practice.getCollectionNames().join(', '));
 
 // Drop one collection, then the whole database

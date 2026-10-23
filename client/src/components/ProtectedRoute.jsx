@@ -1,14 +1,19 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { homeFor, useAuth } from '../context/AuthContext';
+import { useI18n } from '../i18n/LanguageContext';
 import { Loading } from './ui';
 
-/** Blocks a route unless the user is signed in (and an admin when adminOnly is set). */
-export default function ProtectedRoute({ adminOnly = false }) {
-  const { user, loading, isAdmin } = useAuth();
+/**
+ * Blocks a route unless the user is signed in. With `roles`, only those roles may enter;
+ * anyone else is sent to their own home page (drivers to /delivery, staff to /admin).
+ */
+export default function ProtectedRoute({ roles }) {
+  const { user, loading } = useAuth();
+  const { t } = useI18n();
   const location = useLocation();
 
-  if (loading) return <Loading label="Checking your session…" />;
+  if (loading) return <Loading label={t('auth.checking')} />;
   if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
-  if (adminOnly && !isAdmin) return <Navigate to="/" replace />;
+  if (roles && !roles.includes(user.role)) return <Navigate to={homeFor(user)} replace />;
   return <Outlet />;
 }

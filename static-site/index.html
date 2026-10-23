@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Nabta plant care guide - static HTML/CSS lab site">
-  <title>Nabta | Plant Care Guide</title>
+  <meta name="description" content="Nabta Spices guide - static HTML/CSS lab site">
+  <title>Nabta Spices | Spice Guide</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header class="site-header">
     <div class="wrap header-row">
-      <a class="logo" href="index.html">🌿 Nabta</a>
+      <a class="logo" href="index.html"><img src="logo.png" alt="" width="64" height="30"> Nabta Spices</a>
       <nav aria-label="Main">
         <ul class="nav">
           <li><a href="index.html" aria-current="page">Home</a></li>
-          <li><a href="care-guide.html">Care guide</a></li>
+          <li><a href="spice-guide.html">Spice guide</a></li>
           <li><a href="contact.html">Contact</a></li>
         </ul>
       </nav>
@@ -24,46 +24,46 @@
   <main>
     <section class="hero">
       <div class="wrap">
-        <h1>Grow something beautiful</h1>
+        <h1>Flavour you can trust since 2018</h1>
         <p>A small static website built with semantic HTML5 and CSS - the Unit 1 &amp; 2 lab version of the Nabta store.</p>
-        <a class="button" href="care-guide.html">Read the care guide</a>
+        <a class="button" href="spice-guide.html">Read the spice guide</a>
       </div>
     </section>
 
     <section class="wrap" aria-labelledby="why">
-      <h2 id="why">Why plants?</h2>
+      <h2 id="why">Why Nabta spices?</h2>
       <!-- CSS Grid: three columns on desktop, one on phones -->
       <div class="card-grid">
         <article class="card">
-          <h3>Cleaner air</h3>
-          <p>Leafy plants such as pothos and peace lilies freshen indoor spaces.</p>
+          <h3>Known quality</h3>
+          <p>Since 2018 customers in Al Madinah have trusted the same consistent flavour.</p>
         </article>
         <article class="card">
-          <h3>Calmer minds</h3>
-          <p>A little green on the desk can make long study sessions feel lighter.</p>
+          <h3>Freshly ground</h3>
+          <p>Small batches keep the aroma of cardamom, cumin and pepper at their best.</p>
         </article>
         <article class="card">
-          <h3>Easy to start</h3>
-          <p>Snake plants survive low light and forgotten waterings.</p>
+          <h3>House blends</h3>
+          <p>Kabsa, mandi and Arabic coffee blends tested in real kitchens.</p>
         </article>
       </div>
     </section>
 
     <section class="wrap" aria-labelledby="calc">
-      <h2 id="calc">Watering calculator</h2>
-      <p>Uses JavaScript for logic and maths - enter your pot size to estimate how much water to give.</p>
-      <form id="water-form" class="inline">
-        <label for="pot">Pot diameter (cm)</label>
-        <input id="pot" type="number" min="5" max="80" required>
+      <h2 id="calc">Kabsa spice calculator</h2>
+      <p>Uses JavaScript for logic and maths - enter the number of servings to estimate how much kabsa mix and rice you need.</p>
+      <form id="spice-form" class="inline">
+        <label for="servings">Servings</label>
+        <input id="servings" type="number" min="1" max="100" required>
         <button class="button" type="submit">Calculate</button>
       </form>
-      <output id="water-result" for="pot" class="result"></output>
+      <output id="spice-result" for="servings" class="result"></output>
     </section>
   </main>
 
   <footer class="site-footer">
     <div class="wrap">
-      <p>© 2026 Nabta · Static lab site</p>
+      <p>© 2026 Nabta Spices · Since 2018 · Static lab site</p>
     </div>
   </footer>
 

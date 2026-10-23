@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-// One-to-one relationship (embedded): every user has exactly one default address
+const ROLES = ['customer', 'admin', 'supervisor', 'delivery'];
+
+// One-to-one relationship (embedded): the default delivery address used at checkout
 const addressSchema = new mongoose.Schema(
   {
     fullName: { type: String, trim: true, maxlength: 80 },
@@ -10,6 +12,18 @@ const addressSchema = new mongoose.Schema(
     street: { type: String, trim: true, maxlength: 160 },
   },
   { _id: false }
+);
+
+// One-to-many relationship (embedded): a customer can save several labelled addresses (Home, Work…)
+const savedAddressSchema = new mongoose.Schema(
+  {
+    label: { type: String, required: true, trim: true, maxlength: 40 },
+    fullName: { type: String, required: true, trim: true, maxlength: 80 },
+    phone: { type: String, required: true, trim: true, maxlength: 20 },
+    city: { type: String, required: true, trim: true, maxlength: 60 },
+    street: { type: String, required: true, trim: true, maxlength: 160 },
+  },
+  { timestamps: true }
 );
 
 const userSchema = new mongoose.Schema(
@@ -24,9 +38,16 @@ const userSchema = new mongoose.Schema(
       match: [/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, 'Invalid email address'],
     },
     passwordHash: { type: String, required: true, select: false },
-    role: { type: String, enum: ['customer', 'admin'], default: 'customer' },
+    // customer = shopper · admin = owner · supervisor = runs orders & dispatch · delivery = driver
+    role: { type: String, enum: ROLES, default: 'customer' },
     phone: { type: String, trim: true, maxlength: 20 },
+    language: { type: String, enum: ['ar', 'en'], default: 'ar' },
     address: { type: addressSchema, default: () => ({}) },
+    addresses: {
+      type: [savedAddressSchema],
+      default: [],
+      validate: [(v) => v.length <= 10, 'You can save up to 10 addresses.'],
+    },
     // Many-to-many relationship: a user favourites many products, a product is favourited by many users
     favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
     isActive: { type: Boolean, default: true },
@@ -54,3 +75,4 @@ userSchema.set('toJSON', {
 });
 
 module.exports = mongoose.model('User', userSchema);
+module.exports.ROLES = ROLES;

@@ -4,14 +4,16 @@ import { Field } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useI18n } from '../i18n/LanguageContext';
 import { HTML_PATTERNS, PATTERNS, sanitize, validate } from '../utils/validation';
 
 const RULES = {
-  name: [(v) => PATTERNS.name.test(v.trim()), 'Enter your full name (letters only).'],
-  email: [(v) => PATTERNS.email.test(v.trim()), 'Enter a valid email address.'],
-  password: [(v) => PATTERNS.password.test(v), 'Use 10+ characters with letters and numbers.'],
-  confirm: [(v, all) => v === all.password && v.length > 0, 'Passwords do not match.'],
-  terms: [(v) => v === true, 'Please accept the terms.'],
+  name: [(v) => PATTERNS.name.test(v.trim()), 'v.name'],
+  email: [(v) => PATTERNS.email.test(v.trim()), 'v.email'],
+  phone: [(v) => !v.trim() || PATTERNS.phone.test(v.trim()), 'v.phone'],
+  password: [(v) => PATTERNS.password.test(v), 'v.password'],
+  confirm: [(v, all) => v === all.password && v.length > 0, 'v.confirm'],
+  terms: [(v) => v === true, 'v.terms'],
 };
 
 /** Simple password strength meter: counts the kinds of characters used */
@@ -25,11 +27,12 @@ function strength(pw) {
 }
 
 export default function Register() {
-  useDocumentTitle('Create account');
+  const { t, lang, errorText, fieldErrors } = useI18n();
+  useDocumentTitle(t('auth.createAccount'));
   const { user, register } = useAuth();
   const toast = useToast();
   const location = useLocation();
-  const [values, setValues] = useState({ name: '', email: '', password: '', confirm: '', terms: false });
+  const [values, setValues] = useState({ name: '', email: '', phone: '', password: '', confirm: '', terms: false });
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
 
@@ -42,16 +45,22 @@ export default function Register() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    const found = validate(values, RULES);
+    const found = validate(values, RULES, t);
     setErrors(found);
     if (Object.keys(found).length) return;
     setBusy(true);
     try {
-      await register({ name: sanitize(values.name, 80), email: sanitize(values.email, 120), password: values.password });
-      toast.success('Account created. Welcome to Nabta!');
+      await register({
+        name: sanitize(values.name, 80),
+        email: sanitize(values.email, 120),
+        phone: sanitize(values.phone, 20),
+        password: values.password,
+        language: lang,
+      });
+      toast.success(t('auth.welcomeNew'));
       // the <Navigate> at the top redirects as soon as the user is set
     } catch (err) {
-      setErrors(err.details && Object.keys(err.details).length ? err.details : { email: err.message });
+      setErrors(err.details && Object.keys(err.details).length ? fieldErrors(err.details) : { email: errorText(err) });
     } finally {
       setBusy(false);
     }
@@ -61,20 +70,24 @@ export default function Register() {
 
   return (
     <div className="container page auth-page">
-      <form className="card form auth-card" onSubmit={onSubmit}>
-        <h1>Create your account</h1>
-        <p className="muted">It takes less than a minute.</p>
-        <Field id="name" label="Full name" error={errors.name}>
+      <form className="card form auth-card" onSubmit={onSubmit} noValidate>
+        <h1>{t('auth.registerTitle')}</h1>
+        <p className="muted">{t('auth.registerText')}</p>
+        <Field id="name" label={t('auth.fullName')} error={errors.name}>
           <input id="name" name="name" required minLength={2} maxLength={80} autoComplete="name" value={values.name} onChange={onChange} />
         </Field>
-        <Field id="email" label="Email address" error={errors.email}>
-          <input id="email" name="email" type="email" required maxLength={120} autoComplete="email" value={values.email} onChange={onChange} />
+        <Field id="email" label={t('auth.email')} error={errors.email}>
+          <input id="email" name="email" type="email" dir="ltr" required maxLength={120} autoComplete="email" value={values.email} onChange={onChange} />
         </Field>
-        <Field id="password" label="Password" error={errors.password} hint="At least 10 characters, with letters and numbers.">
+        <Field id="phone" label={t('auth.phoneOptional')} error={errors.phone}>
+          <input id="phone" name="phone" type="tel" dir="ltr" pattern={HTML_PATTERNS.phone} maxLength={20} autoComplete="tel" placeholder="05XXXXXXXX" value={values.phone} onChange={onChange} />
+        </Field>
+        <Field id="password" label={t('auth.password')} error={errors.password} hint={t('auth.passwordHint')}>
           <input
             id="password"
             name="password"
             type="password"
+            dir="ltr"
             required
             minLength={10}
             maxLength={72}
@@ -85,20 +98,20 @@ export default function Register() {
           />
         </Field>
         {values.password && (
-          <div className="meter" aria-label={`Password strength ${score} of 4`}>
+          <div className="meter" role="img" aria-label={t('auth.strength', { score })}>
             {[1, 2, 3, 4].map((n) => <span key={n} className={n <= score ? `on s${score}` : ''} />)}
           </div>
         )}
-        <Field id="confirm" label="Confirm password" error={errors.confirm}>
-          <input id="confirm" name="confirm" type="password" required autoComplete="new-password" value={values.confirm} onChange={onChange} />
+        <Field id="confirm" label={t('auth.confirm')} error={errors.confirm}>
+          <input id="confirm" name="confirm" type="password" dir="ltr" required autoComplete="new-password" value={values.confirm} onChange={onChange} />
         </Field>
         <label className={`check ${errors.terms ? 'has-error' : ''}`}>
           <input type="checkbox" name="terms" checked={values.terms} onChange={onChange} required />
-          I agree to the store terms and privacy policy
+          {t('auth.terms')}
         </label>
         {errors.terms && <p className="field-error">{errors.terms}</p>}
-        <button type="submit" className="btn btn-primary btn-block" disabled={busy}>{busy ? 'Creating account…' : 'Create account'}</button>
-        <p className="muted center">Already have an account? <Link to="/login" state={location.state}>Sign in</Link></p>
+        <button type="submit" className="btn btn-primary btn-block" disabled={busy}>{busy ? t('auth.creating') : t('auth.createAccount')}</button>
+        <p className="muted center">{t('auth.haveAccount')} <Link to="/login" state={location.state}>{t('nav.signIn')}</Link></p>
       </form>
     </div>
   );

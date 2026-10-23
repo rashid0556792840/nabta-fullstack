@@ -18,19 +18,20 @@ async function logActivity(type, data = {}) {
 }
 
 /** Reads the newest log lines (used by the admin dashboard). */
-async function readRecentActivity(limit = 20) {
+async function readRecentActivity(limit = 20, { skip = [] } = {}) {
   try {
     const text = await fsp.readFile(LOG_FILE, 'utf8');
     return text
       .trim()
       .split('\n')
       .filter(Boolean)
-      .slice(-limit)
+      .slice(-2000) // only look at the newest part of the file
       .reverse()
       .map((line) => {
         try { return JSON.parse(line); } catch { return null; }
       })
-      .filter(Boolean);
+      .filter((entry) => entry && !skip.includes(entry.type))
+      .slice(0, limit);
   } catch (err) {
     if (err.code === 'ENOENT') return [];
     throw err;

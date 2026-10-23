@@ -1,11 +1,11 @@
 // Unit 4 lab - CRUD on the real Nabta database.
 // Run after "npm run seed":  mongosh "mongodb://127.0.0.1:27017/nabta" mongo-shell/02-crud.js
 
-const category = db.categories.findOne({ name: 'Plant Care' });
+const category = db.categories.findOne({ name: 'Herbs & Dried' });
 
 // CREATE
 const inserted = db.products.insertOne({
-  name: 'Shell Demo Fertiliser',
+  name: 'Shell Demo Sumac',
   description: 'Inserted from mongosh',
   price: 12.5,
   stock: 10,
@@ -28,9 +28,9 @@ db.products
 db.products.updateOne({ _id: inserted.insertedId }, { $set: { price: 14 }, $inc: { stock: 5 } });
 printjson(db.products.findOne({ _id: inserted.insertedId }, { name: 1, price: 1, stock: 1 }));
 
-// UPDATE MANY - tag every product in the Plant Care category, count them, then remove the tag
+// UPDATE MANY - tag every product in the Herbs & Dried category, count them, then remove the tag
 const tagged = db.products.updateMany({ category: category._id }, { $set: { onSale: true } });
-print(`Tagged ${tagged.modifiedCount} Plant Care products as onSale`);
+print(`Tagged ${tagged.modifiedCount} Herbs & Dried products as onSale`);
 db.products.updateMany({ onSale: true }, { $unset: { onSale: '' } });
 
 // DELETE

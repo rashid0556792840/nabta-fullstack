@@ -32,7 +32,7 @@ function isObjectId(value) {
 }
 
 function requireObjectId(value, label = 'id') {
-  if (!isObjectId(value)) throw ApiError.badRequest(`Invalid ${label}.`);
+  if (!isObjectId(value)) throw ApiError.badRequest(`Invalid ${label}.`, undefined, 'invalid_id');
   return value;
 }
 
@@ -48,7 +48,7 @@ function validator() {
     },
     throwIfErrors() {
       if (Object.keys(errors).length) {
-        throw ApiError.badRequest('Please check the highlighted fields.', errors);
+        throw ApiError.badRequest('Please check the highlighted fields.', errors, 'validation');
       }
     },
   };

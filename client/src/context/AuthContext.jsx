@@ -46,11 +46,30 @@ export function AuthProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, isAdmin: user?.role === 'admin', signIn, register, signOut, setUser }),
+    () => ({
+      user,
+      loading,
+      role: user?.role || null,
+      isAdmin: user?.role === 'admin',
+      isStaff: user?.role === 'admin' || user?.role === 'supervisor', // can run orders and deliveries
+      isDriver: user?.role === 'delivery',
+      signIn,
+      register,
+      signOut,
+      setUser,
+    }),
     [user, loading, signIn, register, signOut]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+/** Where each role lands after signing in */
+export function homeFor(user) {
+  if (!user) return '/';
+  if (user.role === 'delivery') return '/delivery';
+  if (user.role === 'admin' || user.role === 'supervisor') return '/admin';
+  return '/';
 }
 
 export function useAuth() {

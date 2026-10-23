@@ -1,23 +1,38 @@
 const mongoose = require('mongoose');
 
-const ORDER_STATUSES = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
+const ORDER_STATUSES = [
+  'pending', // placed by the customer
+  'confirmed', // accepted by the store
+  'processing', // being packed
+  'out_for_delivery', // at least one delivery is on the road
+  'partially_delivered', // some items delivered, the rest still to dispatch
+  'completed', // every item delivered
+  'cancelled',
+];
 
-// Allowed status changes (a small state machine)
-const NEXT_STATUS = {
+// Changes staff can make by hand. Delivery stages are reached through dispatch and drivers.
+const MANUAL_NEXT = {
   pending: ['confirmed', 'cancelled'],
-  confirmed: ['shipped', 'cancelled'],
-  shipped: ['delivered'],
-  delivered: [],
+  confirmed: ['processing', 'cancelled'],
+  processing: ['cancelled'],
+  out_for_delivery: [],
+  partially_delivered: [],
+  completed: [],
   cancelled: [],
 };
+
+// Statuses from which a delivery can be dispatched
+const DISPATCHABLE = ['processing', 'out_for_delivery', 'partially_delivered'];
 
 const orderItemSchema = new mongoose.Schema(
   {
     product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
     name: { type: String, required: true }, // snapshot so old orders keep the original name
+    nameAr: { type: String, default: '' },
     price: { type: Number, required: true, min: 0 }, // snapshot of price at purchase time
     quantity: { type: Number, required: true, min: 1, max: 50 },
     lineTotal: { type: Number, required: true, min: 0 },
+    deliveredQty: { type: Number, default: 0, min: 0 },
   },
   { _id: false }
 );
@@ -33,7 +48,7 @@ const orderSchema = new mongoose.Schema(
     subtotal: { type: Number, required: true, min: 0 },
     deliveryFee: { type: Number, required: true, min: 0 },
     total: { type: Number, required: true, min: 0 },
-    paymentMethod: { type: String, enum: ['cash_on_delivery'], default: 'cash_on_delivery' },
+    paymentMethod: { type: String, default: 'cash_on_delivery' },
     shippingAddress: {
       fullName: { type: String, required: true, trim: true },
       phone: { type: String, required: true, trim: true },
@@ -48,6 +63,7 @@ const orderSchema = new mongoose.Schema(
         status: { type: String, enum: ORDER_STATUSES },
         at: { type: Date, default: Date.now },
         note: String,
+        by: String,
       },
     ],
   },
@@ -66,4 +82,5 @@ orderSchema.set('toJSON', {
 
 module.exports = mongoose.model('Order', orderSchema);
 module.exports.ORDER_STATUSES = ORDER_STATUSES;
-module.exports.NEXT_STATUS = NEXT_STATUS;
+module.exports.MANUAL_NEXT = MANUAL_NEXT;
+module.exports.DISPATCHABLE = DISPATCHABLE;

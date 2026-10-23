@@ -17,22 +17,22 @@ const PATTERNS = {
   phone: /^\+?[0-9\s-]{7,20}$/,
 };
 
-// ----- Watering calculator (maths) -----
-const waterForm = document.getElementById('water-form');
-if (waterForm) {
-  waterForm.addEventListener('submit', (event) => {
+// ----- Kabsa spice calculator (maths) -----
+const spiceForm = document.getElementById('spice-form');
+if (spiceForm) {
+  spiceForm.addEventListener('submit', (event) => {
     event.preventDefault();
-    const diameter = Number(document.getElementById('pot').value);
-    const out = document.getElementById('water-result');
-    if (!Number.isFinite(diameter) || diameter < 5 || diameter > 80) {
-      alert('Please enter a pot diameter between 5 and 80 cm.');
+    const servings = Number(document.getElementById('servings').value);
+    const out = document.getElementById('spice-result');
+    if (!Number.isInteger(servings) || servings < 1 || servings > 100) {
+      alert('Please enter a whole number of servings between 1 and 100.');
       return;
     }
-    // Rough rule: about a quarter of the pot volume (cylinder, height = diameter)
-    const radius = diameter / 2;
-    const volumeLitres = (Math.PI * radius * radius * diameter) / 1000;
-    const water = Math.max(0.1, volumeLitres * 0.25);
-    out.textContent = `About ${water.toFixed(2)} litres per watering (pot volume ≈ ${volumeLitres.toFixed(1)} L).`;
+    // House rule of thumb: about 5 g of kabsa mix and 125 g of rice per serving
+    const spiceGrams = servings * 5;
+    const riceKg = (servings * 125) / 1000;
+    const bags = Math.ceil(spiceGrams / 250); // the mix is sold in 250 g bags
+    out.textContent = `About ${spiceGrams} g of kabsa mix (${bags} bag${bags === 1 ? '' : 's'} of 250 g) and ${riceKg.toFixed(2)} kg of rice.`;
   });
 }
 
